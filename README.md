@@ -31,6 +31,10 @@ Notes and labs from my 26-week Cloud / Linux / Networking plan (target: IT inter
    ```
    Accepted the host key fingerprint on first connect (stored in `~/.ssh/known_hosts`).
 
+## Day 2 — Filesystem hierarchy and paths
+
+Practiced FHS directories, absolute vs. relative paths, and `ls/cd/mkdir/touch/cp/mv/rm/find` in a sandbox directory `~/lab`. Command reference: [cheatsheet.md](cheatsheet.md).
+
 ## Troubleshooting log
 
 | Symptom | Root cause | Fix |
