@@ -91,3 +91,20 @@ Example: in `/` `cd etc` works, in `~` `cd etc` fails (`/home/admin123/etc` does
 - Many commands print nothing on success (`mkdir`, `cp`, `mv`). Silence = OK.
 - Error format: `program: command: object: reason`. `No such file or directory` usually means a wrong path or wrong current directory.
 - `>` overwrites, `>>` appends.
+
+## Users and permissions (Day 3)
+
+| Command | What it does |
+|---|---|
+| `id` / `id alice` | user id, primary group, all groups |
+| `sudo useradd -m -s /bin/bash alice` | create user with home dir and bash |
+| `sudo groupadd dev` | create a group |
+| `sudo usermod -aG dev alice` | add user to group (**always `-a`**) |
+| `sudo -u alice cmd` | run a command as another user |
+| `chmod o-r f` / `chmod g+w f` | remove / add one permission (`u` `g` `o`) |
+| `chmod 750 f` | numeric: r=4 w=2 x=1, one digit per set |
+| `sudo chown root:dev /srv/dev` | change owner and group |
+| `ls -ld dir` | permissions of the directory itself |
+| `umask` / `umask 077` | show / set default mask (file = 666 − umask) |
+
+Common modes: `644` file, `600` private file, `755` directory/script, `750` home dir, `770` group-shared dir.

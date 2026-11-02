@@ -35,6 +35,10 @@ Notes and labs from my 26-week Cloud / Linux / Networking plan (target: IT inter
 
 Practiced FHS directories, absolute vs. relative paths, and `ls/cd/mkdir/touch/cp/mv/rm/find` in a sandbox directory `~/lab`. Command reference: [cheatsheet.md](cheatsheet.md).
 
+## Day 3 — Users, groups and permissions
+
+Created users `alice`, `bob`, `carol` and group `dev`, built a shared directory `/srv/dev` (`root:dev`, `770`) and verified access as each user. Covered `chmod` (symbolic and numeric), `chown`, `useradd`, `groupadd`, `usermod -aG`, `umask`. Lab record: [permissions-lab.md](permissions-lab.md).
+
 ## Troubleshooting log
 
 | Symptom | Root cause | Fix |
