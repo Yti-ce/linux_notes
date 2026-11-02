@@ -39,6 +39,10 @@ Practiced FHS directories, absolute vs. relative paths, and `ls/cd/mkdir/touch/c
 
 Created users `alice`, `bob`, `carol` and group `dev`, built a shared directory `/srv/dev` (`root:dev`, `770`) and verified access as each user. Covered `chmod` (symbolic and numeric), `chown`, `useradd`, `groupadd`, `usermod -aG`, `umask`. Lab record: [permissions-lab.md](permissions-lab.md).
 
+## Day 4 — Package management with apt
+
+Refreshed the index (`apt update`, mirror `my.archive.ubuntu.com`, release codename `resolute`), inspected `tree` with `apt show` (125 kB), installed it, used it on `/srv` and removed it. `tree /srv` as `admin123` showed `dev [error opening dir]` because `/srv/dev` is `root:dev 770` and `admin123` falls under *others*; `sudo tree /srv` listed `alice.txt`. Confirmed `openssh-server` is installed with `apt list --installed`. Commands: [cheatsheet.md](cheatsheet.md#package-management-with-apt-day-4).
+
 ## Troubleshooting log
 
 | Symptom | Root cause | Fix |
@@ -46,6 +50,8 @@ Created users `alice`, `bob`, `carol` and group `dev`, built a shared directory 
 | Installer failed at "installing kernel" (1st attempt) | Host `C:` drive nearly full; VM disk and `.vmem` file could not grow | Rebuilt the VM on `E:` |
 | `ens33` showed "autoconfiguration failed" | VMware NAT/DHCP service on the host not serving DHCP | Checked VMware DHCP/NAT services and VMnet8 settings |
 | Installer failed again at "installing kernel" | Guest network unreliable during install, so package download failed | Installed **offline** (network disabled), configured networking afterwards with netplan |
+| `tree /srv` → `dev [error opening dir]` | `/srv/dev` is `770`; `admin123` is not owner or in group `dev` | Expected; use `sudo` or add user to `dev` |
+| After `apt remove tree`, `tree` → `/usr/bin/tree: No such file or directory` | bash cached the old command path | Expected; `hash -r` clears the cache |
 | Boot showed `PXE-E53` / "Operating System not found" | Disk had no completed install, and the installer had ejected the virtual CD | Reconnected the CD/DVD in VMware and reset the VM |
 
 ## Key concepts learned

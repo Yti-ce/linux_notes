@@ -108,3 +108,18 @@ Example: in `/` `cd etc` works, in `~` `cd etc` fails (`/home/admin123/etc` does
 | `umask` / `umask 077` | show / set default mask (file = 666 − umask) |
 
 Common modes: `644` file, `600` private file, `755` directory/script, `750` home dir, `770` group-shared dir.
+
+## Package management with apt (Day 4)
+
+| Command | What it does |
+|---|---|
+| `sudo apt update` | refresh the package index (installs nothing) |
+| `apt list --upgradable` | packages with newer versions |
+| `apt search tree` | search package names and descriptions |
+| `apt show tree` | package details: version, `Installed-Size`, description |
+| `sudo apt install tree` | download and install a package |
+| `sudo apt remove tree` | uninstall, **keep** config files |
+| `sudo apt purge tree` | uninstall **and** delete config files |
+| `apt list --installed tree` | is it installed? (no output = not installed) |
+
+Long output opens in the `less` pager: `q` quit, Space next page, arrows scroll.
