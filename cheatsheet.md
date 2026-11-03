@@ -154,3 +154,33 @@ echo "checked on Nov 3" >> ~/login-users.txt   # add one line
 `/etc/passwd` format: `name:x:UID:GID:comment:home:shell`. Shell `/usr/sbin/nologin` = service account that cannot log in.
 
 Mistakes I made: typed `touch` for `tail`; used `echo /etc/passwd | grep bash` (prints the words "/etc/passwd", so grep finds nothing — use `cat` or `grep bash /etc/passwd`); used `>>` to save a fresh result (run twice → duplicates; use `>`).
+
+## Editing files: vim and nano (Day 6)
+
+vim has **modes**. Same key = command in Normal mode, text in Insert mode. Not sure where you are? Press `Esc` first.
+
+| Key (vim) | What it does |
+|---|---|
+| `vim f` | open (or create) a file, starts in **Normal** mode |
+| `i` | Insert mode at the cursor (bottom-left shows `-- INSERT --`) |
+| `A` | jump to end of line **and** enter Insert mode |
+| `o` | open a new line below and enter Insert mode |
+| `Esc` | back to Normal mode |
+| `h j k l` / arrows | move left, down, up, right |
+| `x` | delete one character |
+| `dd` | delete the whole line |
+| `:w` / `:wq` | save / save and quit |
+| `:q!` | quit **without saving** (escape hatch) |
+
+`-- VISUAL --` appearing by itself = I clicked inside vim with the mouse. Press `Esc`.
+
+My `~/.vimrc`:
+
+```vim
+set number   " show line numbers
+set mouse=   " disable mouse, so clicks don't start Visual mode
+```
+
+nano has no modes; `^` = Ctrl. `Ctrl+O` then Enter = save, `Ctrl+X` = exit.
+
+Why still learn vim: `vi`/`vim` exists on almost every server and minimal image; nano often does not.

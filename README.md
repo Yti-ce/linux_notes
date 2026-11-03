@@ -47,6 +47,10 @@ Refreshed the index (`apt update`, mirror `my.archive.ubuntu.com`, release coden
 
 Used `cat/head/tail/less` on `/etc/passwd` and `/var/log/syslog`, wrote files with `>` (overwrite) and `>>` (append), and chained commands with `|`, `grep`, `grep -v`, `wc -l` and `sort`. Completed 15 pipe exercises, e.g. counting login users (`grep bash /etc/passwd | wc -l` → 5) and cron runs in syslog. Commands: [cheatsheet.md](cheatsheet.md#viewing-text-redirection-and-pipes-day-5).
 
+## Day 6 — vim and nano
+
+Learned vim's Normal vs Insert mode (`i`/`A`/`o` to type, `Esc` to stop), `x`, `dd`, `:wq`, `:q!`, and finished vimtutor Lesson 1. Edited a real config file, `~/.vimrc` (`set number`, `set mouse=`). Saved and exited a file in nano (`Ctrl+O`, `Ctrl+X`). Commands: [cheatsheet.md](cheatsheet.md#editing-files-vim-and-nano-day-6).
+
 ## Troubleshooting log
 
 | Symptom | Root cause | Fix |
@@ -58,6 +62,8 @@ Used `cat/head/tail/less` on `/etc/passwd` and `/var/log/syslog`, wrote files wi
 | After `apt remove tree`, `tree` → `/usr/bin/tree: No such file or directory` | bash cached the old command path | Expected; `hash -r` clears the cache |
 | `touch -n 3 /var/log/syslog` → `unexpected argument '-n'` | Typed `touch` instead of `tail` | Check the command name first when an option is rejected |
 | `echo /etc/passwd \| grep bash > f` gave an empty file | `echo` prints the text "/etc/passwd", not the file | Use `cat /etc/passwd \| grep bash` |
+| vim showed `-- VISUAL --` unexpectedly | Mouse click inside vim (mouse support on by default) | `Esc`; added `set mouse=` to `~/.vimrc` |
+| File got an extra `i` line in vim | Pressed `i` while already in Insert mode | `Esc` to Normal mode, `dd` on that line, `:wq` |
 | Boot showed `PXE-E53` / "Operating System not found" | Disk had no completed install, and the installer had ejected the virtual CD | Reconnected the CD/DVD in VMware and reset the VM |
 
 ## Key concepts learned
