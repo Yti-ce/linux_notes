@@ -123,3 +123,34 @@ Common modes: `644` file, `600` private file, `755` directory/script, `750` home
 | `apt list --installed tree` | is it installed? (no output = not installed) |
 
 Long output opens in the `less` pager: `q` quit, Space next page, arrows scroll.
+
+## Viewing text, redirection and pipes (Day 5)
+
+| Command | What it does |
+|---|---|
+| `cat f` | print the whole file (short files) |
+| `head -n 5 f` / `tail -n 5 f` | first / last 5 lines |
+| `less f` | page through a long file: Space next page, `q` quit |
+| `echo "text"` | print the **text itself** (not a file's contents) |
+| `cmd > f` | write output to a file, **overwrite** |
+| `cmd >> f` | write output to a file, **append** |
+| `cmd1 \| cmd2` | pipe: output of `cmd1` becomes input of `cmd2` |
+| `grep word` | keep only lines containing `word` (case-sensitive) |
+| `grep -v word` | keep only lines **not** containing `word` |
+| `wc -l` | count lines |
+| `sort` / `sort -r` | sort a–z / reverse |
+
+Examples practiced:
+
+```bash
+grep bash /etc/passwd | wc -l              # users who can log in with bash (5)
+grep -v nologin /etc/passwd | wc -l        # accounts without nologin (7)
+head -n 2 /etc/passwd | tail -n 1          # only line 2
+grep CRON /var/log/syslog | tail -n 3      # last 3 cron runs
+ls /etc | sort > ~/etc-sorted.txt          # save a result
+echo "checked on Nov 3" >> ~/login-users.txt   # add one line
+```
+
+`/etc/passwd` format: `name:x:UID:GID:comment:home:shell`. Shell `/usr/sbin/nologin` = service account that cannot log in.
+
+Mistakes I made: typed `touch` for `tail`; used `echo /etc/passwd | grep bash` (prints the words "/etc/passwd", so grep finds nothing — use `cat` or `grep bash /etc/passwd`); used `>>` to save a fresh result (run twice → duplicates; use `>`).

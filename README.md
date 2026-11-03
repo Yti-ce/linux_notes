@@ -43,6 +43,10 @@ Created users `alice`, `bob`, `carol` and group `dev`, built a shared directory 
 
 Refreshed the index (`apt update`, mirror `my.archive.ubuntu.com`, release codename `resolute`), inspected `tree` with `apt show` (125 kB), installed it, used it on `/srv` and removed it. `tree /srv` as `admin123` showed `dev [error opening dir]` because `/srv/dev` is `root:dev 770` and `admin123` falls under *others*; `sudo tree /srv` listed `alice.txt`. Confirmed `openssh-server` is installed with `apt list --installed`. Commands: [cheatsheet.md](cheatsheet.md#package-management-with-apt-day-4).
 
+## Day 5 — Viewing text, redirection and pipes
+
+Used `cat/head/tail/less` on `/etc/passwd` and `/var/log/syslog`, wrote files with `>` (overwrite) and `>>` (append), and chained commands with `|`, `grep`, `grep -v`, `wc -l` and `sort`. Completed 15 pipe exercises, e.g. counting login users (`grep bash /etc/passwd | wc -l` → 5) and cron runs in syslog. Commands: [cheatsheet.md](cheatsheet.md#viewing-text-redirection-and-pipes-day-5).
+
 ## Troubleshooting log
 
 | Symptom | Root cause | Fix |
@@ -52,6 +56,8 @@ Refreshed the index (`apt update`, mirror `my.archive.ubuntu.com`, release coden
 | Installer failed again at "installing kernel" | Guest network unreliable during install, so package download failed | Installed **offline** (network disabled), configured networking afterwards with netplan |
 | `tree /srv` → `dev [error opening dir]` | `/srv/dev` is `770`; `admin123` is not owner or in group `dev` | Expected; use `sudo` or add user to `dev` |
 | After `apt remove tree`, `tree` → `/usr/bin/tree: No such file or directory` | bash cached the old command path | Expected; `hash -r` clears the cache |
+| `touch -n 3 /var/log/syslog` → `unexpected argument '-n'` | Typed `touch` instead of `tail` | Check the command name first when an option is rejected |
+| `echo /etc/passwd \| grep bash > f` gave an empty file | `echo` prints the text "/etc/passwd", not the file | Use `cat /etc/passwd \| grep bash` |
 | Boot showed `PXE-E53` / "Operating System not found" | Disk had no completed install, and the installer had ejected the virtual CD | Reconnected the CD/DVD in VMware and reset the VM |
 
 ## Key concepts learned
