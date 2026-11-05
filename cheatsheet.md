@@ -1,6 +1,8 @@
 # Linux command cheat sheet (v1)
 
-Built from hands-on practice on Ubuntu Server 26.04.1 (Day 2: filesystem and paths). Updated as the plan goes on.
+Built from hands-on practice on Ubuntu Server 26.04.1. Updated as the plan goes on.
+
+Items marked ⚠️ are ones I got wrong or had to look up in the Day 7 quiz. Permissions explained in depth (Chinese): [permissions-guide.md](permissions-guide.md).
 
 ## Filesystem hierarchy (FHS)
 
@@ -56,6 +58,16 @@ First character: `d` directory, `-` regular file, `l` symbolic link.
 
 Example: in `/` `cd etc` works, in `~` `cd etc` fails (`/home/admin123/etc` does not exist), `cd /etc` works everywhere.
 
+⚠️ **Look at the first character.** `/` = start from the very top of the disk. Anything else = start from where I am now.
+
+| I typed (in `~`) | Linux reads it as | |
+|---|---|---|
+| `ls -l quiz` | `/home/admin123/quiz` | my folder ✅ |
+| `ls -l ~/quiz` | `/home/admin123/quiz` | my folder, works from anywhere ✅ |
+| `ls -l /quiz` | `/quiz` (top level of the disk) | **a different place** ❌ |
+
+Day 7: `sudo touch /quiz` silently created an empty root-owned file at the top of the disk. `sudo` does not warn you; it just does it. Cleaned up with `sudo rm /quiz`. Before any `sudo` command with a path, read the path once.
+
 ## Commands
 
 | Command | What it does |
@@ -66,15 +78,17 @@ Example: in `/` `cd etc` works, in `~` `cd etc` fails (`/home/admin123/etc` does
 | `ls -l` | long format: type, permissions, owner, size, time |
 | `ls -a` / `ls -la ~` | include hidden dotfiles (`.bashrc`, `.ssh`) |
 | `ls -1` | one name per line |
+| `tree ~/quiz` | ⚠️ show a folder as a tree (needs `sudo apt install tree`) |
 | `ls -F` | append `/` to directories |
 | `cat file` | print file contents |
 | `tail -n 5 file` | last 5 lines of a file |
-| `mkdir lab` | create a directory |
+| `mkdir lab` | ⚠️ create a directory (**m**a**k**e **dir**ectory) |
+| `mkdir -p a/b/c` | create nested directories in one go |
 | `touch a.txt` | create an empty file |
 | `echo "text" > b.txt` | write text into a file (**overwrites**) |
 | `cp b.txt c.txt` | copy file (source, then destination) |
 | `cp b.txt docs/` | copy into a directory, keep the name |
-| `mv c.txt notes.txt` | rename |
+| `mv c.txt notes.txt` | ⚠️ rename (Linux has no rename command: renaming = **moving** to a new name in the same place) |
 | `mv notes.txt docs/` | move into a directory (original is gone) |
 | `rm -i a.txt` | delete a file, ask first |
 | `rm -ri docs` | delete a directory and its contents, ask for each item |
@@ -96,24 +110,39 @@ Example: in `/` `cd etc` works, in `~` `cd etc` fails (`/home/admin123/etc` does
 
 | Command | What it does |
 |---|---|
-| `id` / `id alice` | user id, primary group, all groups |
-| `sudo useradd -m -s /bin/bash alice` | create user with home dir and bash |
+| `groups` / `id` / `id alice` | ⚠️ my groups / full user + group ids / someone else's |
+| `sudo useradd -m -s /bin/bash alice` | ⚠️ create user; `-m` = **make** the home folder `/home/alice` (Ubuntu skips it otherwise), `-s` = login shell |
 | `sudo groupadd dev` | create a group |
 | `sudo usermod -aG dev alice` | add user to group (**always `-a`**) |
 | `sudo -u alice cmd` | run a command as another user |
 | `chmod o-r f` / `chmod g+w f` | remove / add one permission (`u` `g` `o`) |
-| `chmod 750 f` | numeric: r=4 w=2 x=1, one digit per set |
-| `sudo chown root:dev /srv/dev` | change owner and group |
+| `chmod 640 f` | ⚠️ numeric: r=4 w=2 x=1. **Add inside each set, then write the 3 digits side by side** |
+| `sudo chown quizuser f` | ⚠️ change the **owner** (ch-own). Always needs `sudo` |
+| `sudo chown root:dev /srv/dev` | change owner **and** group (`owner:group`) |
+| `sudo chown -R alice:dev dir` | the directory and everything inside |
 | `ls -ld dir` | permissions of the directory itself |
 | `umask` / `umask 077` | show / set default mask (file = 666 − umask) |
 
 Common modes: `644` file, `600` private file, `755` directory/script, `750` home dir, `770` group-shared dir.
 
+Working out a number (Day 7 mistake: wrote `620` instead of `640`):
+
+```
+want      owner rw-   group r--   others ---
+add       4+2         4           0
+digits    6           4           0     ->  chmod 640 f
+```
+
+If a digit comes out as 1, 2 or 3, double-check: real permissions almost always use 0, 4, 5, 6, 7.
+Always `ls -l` right after `chmod` / `chown` and compare with what I wanted.
+
+**chmod vs chown:** chmod changes *what people can do* (the 9 letters); chown changes *whose file it is* (the owner column). The 9 letters stay the same after chown.
+
 ## Package management with apt (Day 4)
 
 | Command | What it does |
 |---|---|
-| `sudo apt update` | refresh the package index (installs nothing) |
+| `sudo apt update` | ⚠️ refresh the list of available packages (installs nothing). Run this **first**, then `install` |
 | `apt list --upgradable` | packages with newer versions |
 | `apt search tree` | search package names and descriptions |
 | `apt show tree` | package details: version, `Installed-Size`, description |
@@ -122,6 +151,8 @@ Common modes: `644` file, `600` private file, `755` directory/script, `750` home
 | `sudo apt purge tree` | uninstall **and** delete config files |
 | `apt list --installed tree` | is it installed? (no output = not installed) |
 
+Why `sudo`: installing changes the whole system, so only root may do it. `apt show` / `apt search` / `apt list` only read, so no `sudo`.
+
 Long output opens in the `less` pager: `q` quit, Space next page, arrows scroll.
 
 ## Viewing text, redirection and pipes (Day 5)
@@ -129,11 +160,11 @@ Long output opens in the `less` pager: `q` quit, Space next page, arrows scroll.
 | Command | What it does |
 |---|---|
 | `cat f` | print the whole file (short files) |
-| `head -n 5 f` / `tail -n 5 f` | first / last 5 lines |
+| `head -n 5 f` / `tail -n 5 f` | ⚠️ first / last 5 lines (`-n` = **n**umber of lines). They read the file directly, no `cat` needed |
 | `less f` | page through a long file: Space next page, `q` quit |
 | `echo "text"` | print the **text itself** (not a file's contents) |
-| `cmd > f` | write output to a file, **overwrite** |
-| `cmd >> f` | write output to a file, **append** |
+| `cmd > f` | ⚠️ write output to a file, **overwrite** (one arrow = start over) |
+| `cmd >> f` | ⚠️ write output to a file, **append** (two arrows = add more) |
 | `cmd1 \| cmd2` | pipe: output of `cmd1` becomes input of `cmd2` |
 | `grep word` | keep only lines containing `word` (case-sensitive) |
 | `grep -v word` | keep only lines **not** containing `word` |

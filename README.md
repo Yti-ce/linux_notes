@@ -51,6 +51,19 @@ Used `cat/head/tail/less` on `/etc/passwd` and `/var/log/syslog`, wrote files wi
 
 Learned vim's Normal vs Insert mode (`i`/`A`/`o` to type, `Esc` to stop), `x`, `dd`, `:wq`, `:q!`, and finished vimtutor Lesson 1. Edited a real config file, `~/.vimrc` (`set number`, `set mouse=`). Saved and exited a file in nano (`Ctrl+O`, `Ctrl+X`). Commands: [cheatsheet.md](cheatsheet.md#editing-files-vim-and-nano-day-6).
 
+## Day 7 — Week 1 quiz
+
+20 hands-on questions on the VM, closed book, in 4 rounds: files and paths, users and permissions, apt and pipes, vim. **17/20 correct**, but 11 needed a look at the cheat sheet.
+
+| Round | Result | Missed or looked up |
+|---|---|---|
+| Files and paths | 4/5 | `ls -l /quiz` instead of `~/quiz` (absolute vs relative); looked up `mkdir`, `mv` |
+| Users and permissions | 3/5 | `chmod 620` instead of `640` (group read = 4, not 2); could not recall `chown`; looked up `id`, `useradd -m` |
+| apt, redirection, pipes | 5/5 | looked up `apt update`, `apt install`, `>`/`>>`, `head -n`; did not know how to use `tree` |
+| vim | 5/5 | nothing (`o`, `Esc`, `dd`, `:wq`, `:q!`) |
+
+Milestone "basic admin tasks on my own": **mostly met**. vim and pipes are solid; permissions are the weak spot, so I rewrote them in depth: [permissions-guide.md](permissions-guide.md). Weak items are marked ⚠️ in [cheatsheet.md](cheatsheet.md).
+
 ## Troubleshooting log
 
 | Symptom | Root cause | Fix |
@@ -64,6 +77,7 @@ Learned vim's Normal vs Insert mode (`i`/`A`/`o` to type, `Esc` to stop), `x`, `
 | `echo /etc/passwd \| grep bash > f` gave an empty file | `echo` prints the text "/etc/passwd", not the file | Use `cat /etc/passwd \| grep bash` |
 | vim showed `-- VISUAL --` unexpectedly | Mouse click inside vim (mouse support on by default) | `Esc`; added `set mouse=` to `~/.vimrc` |
 | File got an extra `i` line in vim | Pressed `i` while already in Insert mode | `Esc` to Normal mode, `dd` on that line, `:wq` |
+| Stray empty file `/quiz` owned by root | Ran `sudo touch /quiz` meaning `~/quiz`; leading `/` = top of the disk, and `sudo` let it write there | `sudo rm /quiz`; read the path before any `sudo` command |
 | Boot showed `PXE-E53` / "Operating System not found" | Disk had no completed install, and the installer had ejected the virtual CD | Reconnected the CD/DVD in VMware and reset the VM |
 
 ## Key concepts learned

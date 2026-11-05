@@ -1,6 +1,6 @@
 # Day 3 lab: users, groups and permissions
 
-Ubuntu Server 26.04.1, logged in as `admin123` (member of `sudo`). Every output below is copied from my own terminal.
+Ubuntu Server 26.04.1, logged in as `admin123` (member of `sudo`). Every output below is copied from my own terminal. For the concepts explained step by step, see [permissions-guide.md](permissions-guide.md).
 
 ## 1. Who am I
 
