@@ -1,5 +1,7 @@
 # Chapter 4 — Service management with systemd
 
+Learned and written on **Day 9**.
+
 A **service** is a program that should run in the background all the time and start at boot (sshd, nginx). On Ubuntu, **systemd** manages services; you talk to it with **`systemctl`**.
 
 ## 4.1 Two independent switches: start vs enable

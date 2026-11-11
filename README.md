@@ -31,25 +31,27 @@ Notes and labs from my 26-week Cloud / Linux / Networking plan (target: IT inter
    ```
    Accepted the host key fingerprint on first connect (stored in `~/.ssh/known_hosts`).
 
+Handbook: [Chapter 1](handbook/01-environment.md).
+
 ## Day 2 — Filesystem hierarchy and paths
 
-Practiced FHS directories, absolute vs. relative paths, and `ls/cd/mkdir/touch/cp/mv/rm/find` in a sandbox directory `~/lab`. Command reference: [cheatsheet.md](cheatsheet.md).
+Practiced FHS directories, absolute vs. relative paths, and `ls/cd/mkdir/touch/cp/mv/rm/find` in a sandbox directory `~/lab`. Command reference: [cheatsheet.md](cheatsheet.md). Handbook: [0.1–0.3](handbook/00-shell-basics.md), [1.7](handbook/01-environment.md#17-absolute-vs-relative-paths).
 
 ## Day 3 — Users, groups and permissions
 
-Created users `alice`, `bob`, `carol` and group `dev`, built a shared directory `/srv/dev` (`root:dev`, `770`) and verified access as each user. Covered `chmod` (symbolic and numeric), `chown`, `useradd`, `groupadd`, `usermod -aG`, `umask`. Lab record: [permissions-lab.md](permissions-lab.md).
+Created users `alice`, `bob`, `carol` and group `dev`, built a shared directory `/srv/dev` (`root:dev`, `770`) and verified access as each user. Covered `chmod` (symbolic and numeric), `chown`, `useradd`, `groupadd`, `usermod -aG`, `umask`. Lab record: [permissions-lab.md](permissions-lab.md). Handbook: [Chapter 2](handbook/02-permissions.md).
 
 ## Day 4 — Package management with apt
 
-Refreshed the index (`apt update`, mirror `my.archive.ubuntu.com`, release codename `resolute`), inspected `tree` with `apt show` (125 kB), installed it, used it on `/srv` and removed it. `tree /srv` as `admin123` showed `dev [error opening dir]` because `/srv/dev` is `root:dev 770` and `admin123` falls under *others*; `sudo tree /srv` listed `alice.txt`. Confirmed `openssh-server` is installed with `apt list --installed`. Commands: [cheatsheet.md](cheatsheet.md#package-management-with-apt-day-4).
+Refreshed the index (`apt update`, mirror `my.archive.ubuntu.com`, release codename `resolute`), inspected `tree` with `apt show` (125 kB), installed it, used it on `/srv` and removed it. `tree /srv` as `admin123` showed `dev [error opening dir]` because `/srv/dev` is `root:dev 770` and `admin123` falls under *others*; `sudo tree /srv` listed `alice.txt`. Confirmed `openssh-server` is installed with `apt list --installed`. Commands: [cheatsheet.md](cheatsheet.md#package-management-with-apt-day-4). Handbook: [1.6](handbook/01-environment.md#16-packages-with-apt).
 
 ## Day 5 — Viewing text, redirection and pipes
 
-Used `cat/head/tail/less` on `/etc/passwd` and `/var/log/syslog`, wrote files with `>` (overwrite) and `>>` (append), and chained commands with `|`, `grep`, `grep -v`, `wc -l` and `sort`. Completed 15 pipe exercises, e.g. counting login users (`grep bash /etc/passwd | wc -l` → 5) and cron runs in syslog. Commands: [cheatsheet.md](cheatsheet.md#viewing-text-redirection-and-pipes-day-5).
+Used `cat/head/tail/less` on `/etc/passwd` and `/var/log/syslog`, wrote files with `>` (overwrite) and `>>` (append), and chained commands with `|`, `grep`, `grep -v`, `wc -l` and `sort`. Completed 15 pipe exercises, e.g. counting login users (`grep bash /etc/passwd | wc -l` → 5) and cron runs in syslog. Commands: [cheatsheet.md](cheatsheet.md#viewing-text-redirection-and-pipes-day-5). Handbook: [0.4–0.5](handbook/00-shell-basics.md#04-viewing-text--day-5).
 
 ## Day 6 — vim and nano
 
-Learned vim's Normal vs Insert mode (`i`/`A`/`o` to type, `Esc` to stop), `x`, `dd`, `:wq`, `:q!`, and finished vimtutor Lesson 1. Edited a real config file, `~/.vimrc` (`set number`, `set mouse=`). Saved and exited a file in nano (`Ctrl+O`, `Ctrl+X`). Commands: [cheatsheet.md](cheatsheet.md#editing-files-vim-and-nano-day-6).
+Learned vim's Normal vs Insert mode (`i`/`A`/`o` to type, `Esc` to stop), `x`, `dd`, `:wq`, `:q!`, and finished vimtutor Lesson 1. Edited a real config file, `~/.vimrc` (`set number`, `set mouse=`). Saved and exited a file in nano (`Ctrl+O`, `Ctrl+X`). Commands: [cheatsheet.md](cheatsheet.md#editing-files-vim-and-nano-day-6). Handbook: [0.6](handbook/00-shell-basics.md#06-editing-files-vim-and-nano--day-6).
 
 ## Day 7 — Week 1 quiz
 
@@ -74,7 +76,17 @@ Installed nginx and saw that `start`/`stop` (now) and `enable`/`disable` (at boo
 
 ## Server Setup Handbook
 
-Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md).
+Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md). Every topic from Day 1 on has a chapter; the handbook's "Find by day" table maps each day to its section.
+
+How the files fit together:
+
+| File | Use it for |
+|---|---|
+| [handbook/](handbook/README.md) | step-by-step setup, organised by topic (the milestone) |
+| [cheatsheet.md](cheatsheet.md) | one-line lookup of a command |
+| [permissions-guide.md](permissions-guide.md) | permissions explained in depth (Chinese) |
+| [permissions-lab.md](permissions-lab.md) | Day 3 raw lab record |
+| this README | daily log, quiz results, troubleshooting log |
 
 ## Troubleshooting log
 
