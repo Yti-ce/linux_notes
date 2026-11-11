@@ -215,3 +215,31 @@ set mouse=   " disable mouse, so clicks don't start Visual mode
 nano has no modes; `^` = Ctrl. `Ctrl+O` then Enter = save, `Ctrl+X` = exit.
 
 Why still learn vim: `vi`/`vim` exists on almost every server and minimal image; nano often does not.
+
+## Processes (Day 8)
+
+| Command | What it does |
+|---|---|
+| `ps` | processes in **this terminal** only |
+| `ps aux \| grep name` | find a process by name in **all** processes; column 2 = PID; ignore the `grep` line itself |
+| `top` | live view sorted by CPU; `q` to quit |
+| `cmd &` | run in the background; prints `[1] PID` |
+| `kill PID` | send SIGTERM (15, default): "please exit" → `Terminated` |
+| `kill -9 PID` | send SIGKILL (9): forced → `Killed`. Use only if 15 doesn't work |
+| `yes > /dev/null &` | lab trick: burns one CPU core |
+| `> /dev/null` | throw output away ("black hole") |
+
+## Services: systemctl (Day 9)
+
+| Command | What it does |
+|---|---|
+| `systemctl status svc` | state; `Active:` = running now, `enabled` = starts at boot |
+| `sudo systemctl start / stop / restart svc` | now |
+| `sudo systemctl enable / disable svc` | at boot (independent of start/stop) |
+| `sudo systemctl daemon-reload` | after creating/editing a unit file in `/etc/systemd/system/` |
+| `sudo reboot` | restart the VM; the DHCP IP may change afterwards |
+| `curl http://localhost` | fetch a web page from the command line |
+
+Unit file skeleton: `[Unit] Description=` · `[Service] ExecStart=/absolute/path` `Restart=always` · `[Install] WantedBy=multi-user.target`. Full walkthrough: [handbook/04-systemd.md](handbook/04-systemd.md).
+
+⚠️ Day 8–9 warm-up: `chown` needed a reminder (`sudo chown owner:group file`). ⚠️ `chmod 755 timestamp.sh` from `~` failed: relative path again → use `/usr/local/bin/timestamp.sh`.
