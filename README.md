@@ -64,6 +64,18 @@ Learned vim's Normal vs Insert mode (`i`/`A`/`o` to type, `Esc` to stop), `x`, `
 
 Milestone "basic admin tasks on my own": **mostly met**. vim and pipes are solid; permissions are the weak spot, so I rewrote them in depth: [permissions-guide.md](permissions-guide.md). Weak items are marked ⚠️ in [cheatsheet.md](cheatsheet.md).
 
+## Day 8 — Processes
+
+Warm-up (closed book): `chmod 640` ✅, `chown root:root` needed a reminder, `head -n 3` ✅. Listed processes with `ps` and `ps aux | grep`, created a high-CPU process with `yes > /dev/null &`, found it with `top` (99.7% = one of two cores) and `ps aux | grep`, and stopped it with `kill` (SIGTERM → `Terminated`) and `kill -9` (SIGKILL → `Killed`). Handbook: [Chapter 1](handbook/01-environment.md), [Chapter 3](handbook/03-processes.md).
+
+## Day 9 — systemd
+
+Installed nginx and saw that `start`/`stop` (now) and `enable`/`disable` (at boot) are independent. Wrote a custom service (`timestamp.sh` + `timestamp.service`) that logs the time every minute; its first start hit `start-limit-hit` because of a typo (`ture`), found by reading `status` and the script. Rebooted: nginx and the custom service both came back on their own. Handbook: [Chapter 4](handbook/04-systemd.md).
+
+## Server Setup Handbook
+
+Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md).
+
 ## Troubleshooting log
 
 | Symptom | Root cause | Fix |
@@ -79,6 +91,11 @@ Milestone "basic admin tasks on my own": **mostly met**. vim and pipes are solid
 | File got an extra `i` line in vim | Pressed `i` while already in Insert mode | `Esc` to Normal mode, `dd` on that line, `:wq` |
 | Stray empty file `/quiz` owned by root | Ran `sudo touch /quiz` meaning `~/quiz`; leading `/` = top of the disk, and `sudo` let it write there | `sudo rm /quiz`; read the path before any `sudo` command |
 | Boot showed `PXE-E53` / "Operating System not found" | Disk had no completed install, and the installer had ejected the virtual CD | Reconnected the CD/DVD in VMware and reset the VM |
+| `ssh admin@123 192.168.207.255` → `connect to host 0.0.0.123` | `@` belongs to the user name (`admin123`); `.255` is the broadcast address | `ssh admin123@<vm-ip>`, no space |
+| `touch quiz..txt` created a second file | Typo (two dots) | Read the command before Enter; `rm quiz..txt` |
+| `sudo chmod 755 timestamp.sh` → `No such file or directory` | Relative path from `~`; the file is in `/usr/local/bin` | Use the absolute path |
+| Custom service `failed (Result: start-limit-hit)`, `status=0/SUCCESS` after 24 ms | `while ture` typo: the loop never ran, script exited at once, `Restart=always` retried 5× | Fixed to `true`, `systemctl restart` |
+| SSH timed out after `sudo reboot` | DHCP gave the VM a new IP (`.129` → `.130`) | Read the IP on the VM console login screen; static IP in Chapter 9 |
 
 ## Key concepts learned
 
