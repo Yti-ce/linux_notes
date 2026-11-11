@@ -15,14 +15,31 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 
 ## Contents
 
-| Chapter | Topic | Status |
+| Chapter | Topic | Learned on | Status |
+|---|---|---|---|
+| [0](00-shell-basics.md) | Shell basics: filesystem layout, files, viewing text, redirection and pipes, vim and nano | Day 2, 5, 6 | ✅ |
+| [1](01-environment.md) | Environment and initial setup: VM, SSH, hostname, apt, paths | Day 1, 2, 4 | ✅ Day 8 |
+| [2](02-permissions.md) | Users, groups and permissions: `useradd`, `chmod`, `chown`, `umask`, shared directory | Day 3, 7 | ✅ (rebuild check on Day 10) |
+| [3](03-processes.md) | Process management: `ps`, `top`, `kill`, signals, high-CPU triage | Day 8 | ✅ Day 8 |
+| [4](04-systemd.md) | Service management with systemd: nginx, custom unit, boot test | Day 9 | ✅ Day 9 |
+| 5 | Ops scripts: backup, batch rename, disk alert (`scripts/`) | Day 10 | ⏳ Day 10 |
+| 6 | Logs and troubleshooting: `journalctl`, `/var/log`, log analysis | Day 11–12 | ⏳ Day 11–12 |
+| 7 | Scheduled jobs: `crontab`, environment in cron | Day 13 | ⏳ Day 13 |
+| Appendix A | Troubleshooting record: 5 failure scenarios | Day 14 | ⏳ Day 14 |
+| 8–12 | Networking, SSH hardening, firewall, nginx reverse proxy | Week 3–4 | ⏳ Week 3–4 |
+
+## Find by day
+
+| Day | Topic | Where |
 |---|---|---|
-| [1](01-environment.md) | Environment and initial setup: VM, SSH, hostname, apt, paths | ✅ Day 8 |
-| 2 | Users, groups and permissions | ⏳ Day 10 |
-| [3](03-processes.md) | Process management: `ps`, `top`, `kill`, signals, high-CPU triage | ✅ Day 8 |
-| [4](04-systemd.md) | Service management with systemd: nginx, custom unit, boot test | ✅ Day 9 |
-| 5 | Ops scripts: backup, batch rename, disk alert (`scripts/`) | ⏳ Day 10 |
-| 6 | Logs and troubleshooting: `journalctl`, `/var/log`, log analysis | ⏳ Day 11–12 |
-| 7 | Scheduled jobs: `crontab`, environment in cron | ⏳ Day 13 |
-| Appendix A | Troubleshooting record: 5 failure scenarios | ⏳ Day 14 |
-| 8–12 | Networking, SSH hardening, firewall, nginx reverse proxy | ⏳ Week 3–4 |
+| 1 | Install Ubuntu Server, network, SSH | [1.1–1.4](01-environment.md#11-create-the-vm) |
+| 2 | Filesystem layout, paths, file commands | [0.1–0.3](00-shell-basics.md#01-filesystem-layout-fhs--day-2), [1.7](01-environment.md#17-absolute-vs-relative-paths) |
+| 3 | Users, groups, permissions | [Chapter 2](02-permissions.md) |
+| 4 | Packages with apt | [1.6](01-environment.md#16-packages-with-apt) |
+| 5 | Viewing text, redirection, pipes | [0.4–0.5](00-shell-basics.md#04-viewing-text--day-5) |
+| 6 | vim and nano | [0.6](00-shell-basics.md#06-editing-files-vim-and-nano--day-6) |
+| 7 | Week 1 quiz (17/20) | results in [README](../README.md#day-7--week-1-quiz); mistakes in [0.7](00-shell-basics.md#07-mistakes-i-made-days-27) and [2.8](02-permissions.md#28-mistakes-i-made-days-3-and-7) |
+| 8 | Processes | [Chapter 3](03-processes.md) |
+| 9 | systemd services | [Chapter 4](04-systemd.md) |
+
+Quick lookup of single commands: [cheatsheet.md](../cheatsheet.md).

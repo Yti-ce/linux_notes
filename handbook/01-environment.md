@@ -1,5 +1,7 @@
 # Chapter 1 — Environment and initial setup
 
+Learned on **Day 1** (1.1–1.4: VM, install, network, SSH), **Day 4** (1.6: apt) and **Day 2** (1.7: paths); written up on Day 8. Shell commands used here are in [Chapter 0](00-shell-basics.md).
+
 ## 1.1 Create the VM
 
 | Setting | Value | Why |
@@ -71,6 +73,19 @@ sudo apt remove tree
 ```
 
 `apt update` only downloads the list of available versions; `apt install` actually installs.
+
+| Command | What it does |
+|---|---|
+| `apt search tree` | search package names and descriptions |
+| `apt show tree` | version, `Installed-Size` (tree: 125 kB), description |
+| `apt list --upgradable` | packages with a newer version |
+| `sudo apt remove tree` | uninstall, **keep** config files |
+| `sudo apt purge tree` | uninstall **and** delete config files |
+
+- `install` / `remove` / `update` change the whole system → `sudo`. `show` / `search` / `list` only read → no `sudo`.
+- Long output opens in the `less` pager: Space = next page, `q` = quit.
+- Day 4 on this VM: mirror `my.archive.ubuntu.com`, release codename `resolute`.
+- After `apt remove tree`, typing `tree` gave `/usr/bin/tree: No such file or directory` instead of "command not found": bash had cached the old path. Expected; `hash -r` clears the cache.
 
 ## 1.7 Absolute vs relative paths
 

@@ -1,5 +1,7 @@
 # Chapter 3 — Process management
 
+Learned and written on **Day 8**.
+
 A **program** is a file on disk; a **process** is a program that is running. Every process has a **PID** (process ID), which is how you find and stop it.
 
 ## 3.1 Listing processes

@@ -2,7 +2,7 @@
 
 Built from hands-on practice on Ubuntu Server 26.04.1. Updated as the plan goes on.
 
-Items marked ⚠️ are ones I got wrong or had to look up in the Day 7 quiz. Permissions explained in depth (Chinese): [permissions-guide.md](permissions-guide.md).
+Items marked ⚠️ are ones I got wrong or had to look up in the Day 7 quiz. Permissions explained in depth (Chinese): [permissions-guide.md](permissions-guide.md). Step-by-step setup by topic: [handbook/](handbook/README.md).
 
 ## Filesystem hierarchy (FHS)
 
