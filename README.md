@@ -2,6 +2,8 @@
 
 Notes and labs from my 26-week Cloud / Linux / Networking plan (target: IT internship in Kuala Lumpur).
 
+> **How this repo was made:** notes drafted with an AI tutor; all labs run and verified by me on my own VM. The terminal output, mistakes and troubleshooting entries are from my own sessions.
+
 ## Lab environment
 
 | Item | Value |
