@@ -74,6 +74,10 @@ Warm-up (closed book): `chmod 640` ✅, `chown root:root` needed a reminder, `he
 
 Installed nginx and saw that `start`/`stop` (now) and `enable`/`disable` (at boot) are independent. Wrote a custom service (`timestamp.sh` + `timestamp.service`) that logs the time every minute; its first start hit `start-limit-hit` because of a typo (`ture`), found by reading `status` and the script. Rebooted: nginx and the custom service both came back on their own. Handbook: [Chapter 4](handbook/04-systemd.md).
 
+## Day 10 — Shell scripting
+
+Learned exit codes (`$?`, 0 = success, 127 = command not found), variables, arguments (`$1`, `$#`), `$(...)`, `[ ]` tests, `if`/`else`, `for` and functions. Built three scripts step by step: [`backup.sh`](handbook/scripts/backup.sh), [`rename.sh`](handbook/scripts/rename.sh), [`disk_alert.sh`](handbook/scripts/disk_alert.sh). Testing found real bugs: a backup script that printed "created" and returned 0 when tar had failed, a `[ -d"$1" ]` test that was always true, and `"dir"` without `$`. Handbook: [Chapter 5](handbook/05-scripts.md).
+
 ## Server Setup Handbook
 
 Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md). Every topic from Day 1 on has a chapter; the handbook's "Find by day" table maps each day to its section.
@@ -108,6 +112,11 @@ How the files fit together:
 | `sudo chmod 755 timestamp.sh` → `No such file or directory` | Relative path from `~`; the file is in `/usr/local/bin` | Use the absolute path |
 | Custom service `failed (Result: start-limit-hit)`, `status=0/SUCCESS` after 24 ms | `while ture` typo: the loop never ran, script exited at once, `Restart=always` retried 5× | Fixed to `true`, `systemctl restart` |
 | SSH timed out after `sudo reboot` | DHCP gave the VM a new IP (`.129` → `.130`) | Read the IP on the VM console login screen; static IP in Chapter 9 |
+| `dir=cat /var/log` → `/var/log: Is a directory`, `$dir` empty | A space ends the value; bash ran `/var/log` as a command | `dir=/var/log`; check with `echo "$dir"` |
+| `checkdir.sh /nothing` said "is a directory" | `[ -d"$1" ]`: missing space, so `[ ]` only tested "non-empty" | `[ -d "$1" ]` |
+| `backup.sh` with no argument printed "Backup created", exit 0 | No input check; `$?` came from the final `echo` | `-z` / `! -d` guards with `exit 1` |
+| `rename.sh` said an existing directory "is not a directory" | `[ ! -d "dir" ]`: missing `$` | `"$dir"`; always test the success case |
+| `~/scirpts/disk_alert.sh` → exit 127 | Typo in the path | 127 = command not found: check spelling |
 
 ## Key concepts learned
 
