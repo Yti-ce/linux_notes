@@ -22,7 +22,7 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 | [2](02-permissions.md) | Users, groups and permissions: `useradd`, `chmod`, `chown`, `umask`, shared directory | Day 3, 7 | ✅ (rebuild check on Day 10) |
 | [3](03-processes.md) | Process management: `ps`, `top`, `kill`, signals, high-CPU triage | Day 8 | ✅ Day 8 |
 | [4](04-systemd.md) | Service management with systemd: nginx, custom unit, boot test | Day 9 | ✅ Day 9 |
-| 5 | Ops scripts: backup, batch rename, disk alert (`scripts/`) | Day 10 | ⏳ Day 10 |
+| [5](05-scripts.md) | Ops scripts: bash basics, backup, batch rename, disk alert ([`scripts/`](scripts/)) | Day 10 | ✅ Day 10 |
 | 6 | Logs and troubleshooting: `journalctl`, `/var/log`, log analysis | Day 11–12 | ⏳ Day 11–12 |
 | 7 | Scheduled jobs: `crontab`, environment in cron | Day 13 | ⏳ Day 13 |
 | Appendix A | Troubleshooting record: 5 failure scenarios | Day 14 | ⏳ Day 14 |
@@ -41,5 +41,6 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 | 7 | Week 1 quiz (17/20) | results in [README](../README.md#day-7--week-1-quiz); mistakes in [0.7](00-shell-basics.md#07-mistakes-i-made-days-27) and [2.8](02-permissions.md#28-mistakes-i-made-days-3-and-7) |
 | 8 | Processes | [Chapter 3](03-processes.md) |
 | 9 | systemd services | [Chapter 4](04-systemd.md) |
+| 10 | Shell scripting, 3 ops scripts | [Chapter 5](05-scripts.md) |
 
 Quick lookup of single commands: [cheatsheet.md](../cheatsheet.md).

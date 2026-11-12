@@ -243,3 +243,25 @@ Why still learn vim: `vi`/`vim` exists on almost every server and minimal image;
 Unit file skeleton: `[Unit] Description=` · `[Service] ExecStart=/absolute/path` `Restart=always` · `[Install] WantedBy=multi-user.target`. Full walkthrough: [handbook/04-systemd.md](handbook/04-systemd.md).
 
 ⚠️ Day 8–9 warm-up: `chown` needed a reminder (`sudo chown owner:group file`). ⚠️ `chmod 755 timestamp.sh` from `~` failed: relative path again → use `/usr/local/bin/timestamp.sh`.
+
+## Shell scripting (Day 10)
+
+| Syntax | Meaning |
+|---|---|
+| `echo $?` | exit code of the last command: 0 = OK, 127 = command not found |
+| `x=value` / `"$x"` | store (no `$`, no spaces) / read (with `$`) |
+| `$1` `$2` / `$#` / `$0` | arguments / how many / script name |
+| `$(cmd)` | replace with the output of `cmd` |
+| `[ -d "$x" ]` `[ -f "$x" ]` `[ -z "$x" ]` | is a directory / is a file / is empty |
+| `[ "$a" -gt 80 ]` `-lt` | number greater / less than |
+| `[ ! ... ]` | not |
+| `if [ ... ]; then ... else ... fi` | branch |
+| `for f in dir/*.txt; do ... done` | loop over files |
+| `name() { ...; }` | function; `$1` inside = function argument |
+| `exit 1` | end the script as failed |
+| `tar -czf out.tar.gz dir` | archive + compress a directory |
+| `basename /a/b/c.txt` | → `c.txt` |
+| `df --output=pcent / \| tail -n 1 \| tr -d ' %'` | disk usage of `/` as a bare number |
+| `rmdir dir` | delete an **empty** directory (safer than `rm -r`) |
+
+⚠️ Day 10: forgot `$` when reading a variable (`"dir"`); dropped spaces (`[ -d"$1" ]`, `backup -`); used `mkdir` to "create" a script file (use `nano`/`touch`).
