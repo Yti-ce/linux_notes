@@ -82,6 +82,10 @@ Learned exit codes (`$?`, 0 = success, 127 = command not found), variables, argu
 
 Warm-up: could not write `ls -l /srv` (absolute path) or change only a file's group (`sudo chown :adm f`); `chmod 640` right. Rebuilt the Chapter 2 permissions lab from scratch with new names (`tom`, `jerry`, `eve`, group `ops`, `/srv/ops` 770): all checks passed ([2.9](handbook/02-permissions.md#29-rebuild-check-day-11)). Then `journalctl` (`-u`, `-n`, `-b`, `--since/--until`, `--no-pager`) and three failures caused on purpose and fixed from the logs: nginx config syntax error, port 80 already in use (`ss -tlnp`, `kill`), and a missing execute bit on the custom service (`203/EXEC`). Also traced a real nginx restart to a system update. Handbook: [Chapter 6](handbook/06-logs.md).
 
+## Day 12 — Text processing and log analysis
+
+Warm-up: absolute path and pipe right; used `head` where `tail` was asked. Generated 159 requests with `curl` in a `for` loop (plus browser refreshes from Windows), read the access log field by field, and counted status codes and top IPs with `awk | sort | uniq -c | sort -rn | head`; `sed 's/old/new/'` for replacing text. Wrapped it in [`log_report.sh`](handbook/scripts/log_report.sh) with a missing-file check. Handbook: [6.6](handbook/06-logs.md#66-log-analysis-nginx-access-log-day-12).
+
 ## Server Setup Handbook
 
 Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md). Every topic from Day 1 on has a chapter; the handbook's "Find by day" table maps each day to its section.
@@ -126,6 +130,8 @@ How the files fit together:
 | nginx `bind() to 0.0.0.0:80 failed (98: Address already in use)` | Another program (python3) held port 80 (on purpose) | `sudo ss -tlnp \| grep :80`, `sudo kill <PID>`, start nginx |
 | `timestamp.service` `status=203/EXEC`, `Permission denied` | Script lost its `x` bit (on purpose) | `sudo chmod 755 /usr/local/bin/timestamp.sh` |
 | `journalctl -u /usr/local/bin/timestamp.sh` → `-- No entries --` | `-u` takes the service name | `journalctl -u timestamp` |
+| `log_report.sh: line 4: wc-l: command not found` | Missing space | `wc -l` |
+| 32 × 404 and only 102 × 200 instead of 31 / 101+ | Browser also asked for `/favicon.ico`; refreshes returned `304` | Expected; read the log, not the guess |
 
 ## Key concepts learned
 

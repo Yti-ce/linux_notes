@@ -281,3 +281,19 @@ Unit file skeleton: `[Unit] Description=` · `[Service] ExecStart=/absolute/path
 | `cmd &` | run in the background |
 
 ⚠️ Day 11: `-u` with a file path → `-- No entries --`; check the **date** of an error line; `chown :group f` (only the group); `chmod` on a root-owned file needs `sudo`; forgot `kill`.
+
+## Text processing (Day 12)
+
+| Command | Meaning |
+|---|---|
+| `curl http://localhost/` / `curl -s -o /dev/null URL` | fetch a page / quietly, discard the page |
+| `for i in $(seq 1 100); do ...; done` | repeat 100 times |
+| `grep " 404 " file \| wc -l` | count lines containing ` 404 ` |
+| `awk '{print $1}' file` | print field 1 of each line (fields split on spaces) |
+| `sort \| uniq -c` | count identical lines (sort first!) |
+| `sort -rn \| head -n 3` | biggest numbers first, top 3 |
+| `sed 's/old/new/'` | replace text in the output |
+
+nginx access log: `$1` = IP, `$9` = status. Top IP: `awk '{print $1}' access.log | sort | uniq -c | sort -rn | head -n 3`
+
+⚠️ Day 12: `head` vs `tail` mixed up; `wc-l` (missing space).

@@ -173,3 +173,96 @@ sudo systemctl restart timestamp
 | pasted a `Nov 11` error as today's cause | old entry | check the date; use `--since today` |
 | forgot how to end a process | — | `sudo kill <PID>` (Chapter 3) |
 | `chmod 755 /usr/local/bin/timestamp.sh` | `Operation not permitted` | file is `root:root`; only the owner may chmod → `sudo chmod` (same mistake as [2.9](02-permissions.md#29-rebuild-check-day-11)) |
+
+## 6.6 Log analysis: nginx access log (Day 12)
+
+nginx writes one line per request to `/var/log/nginx/access.log` (errors go to `/var/log/nginx/error.log`).
+
+### Generate traffic
+
+```bash
+curl http://localhost/                      # fetch a page from the command line
+for i in $(seq 1 100); do curl -s -o /dev/null http://localhost/; done
+for i in $(seq 1 30); do curl -s -o /dev/null http://localhost/abc; done
+```
+
+- `seq 1 100` prints 1..100, so the loop runs 100 times; `i` is just the loop variable (not used here).
+- `curl -s` = silent; `-o /dev/null` = write the page into the "black hole" instead of the screen.
+
+Plus ~25 refreshes from the Windows browser at `http://192.168.207.130/`. Total: 159 lines (`wc -l`).
+
+### Read one line
+
+```text
+::1  -  -  [13/Nov/2026:12:44:02  +0000]  "GET  /  HTTP/1.1"  200  615  "-"  "curl/8.18.0"
+ 1   2  3          4                5        6   7     8       9    10   11       12
+```
+
+| Field (split on spaces) | Meaning |
+|---|---|
+| `$1` | client IP (`::1` = localhost in IPv6; `192.168.207.1` = my Windows host on VMnet8) |
+| `$4`–`$5` | time |
+| `$6`–`$8` | request: method, path, protocol |
+| `$9` | **status code** |
+| `$10` | bytes sent |
+| `$12` | client (curl, browser) |
+
+| Status | Meaning |
+|---|---|
+| `200` | OK |
+| `304` | Not Modified: browser refresh, page served from its cache |
+| `403` | Forbidden |
+| `404` | Not Found |
+| `500` | server error |
+
+### grep, awk, sort, uniq, sed
+
+| Tool | Does | Example |
+|---|---|---|
+| `grep` | picks **lines** | `grep " 404 " access.log \| wc -l` (spaces around 404 so a time or byte count containing 404 does not match) |
+| `awk` | picks **columns** | `awk '{print $9}' access.log` (single quotes; awk's `$9` is field 9, not a script argument) |
+| `sort \| uniq -c` | counts identical lines | `uniq` only merges **adjacent** lines, so always `sort` first |
+| `sort -rn` | sorts by **n**umber, **r**everse (largest first) | |
+| `sed 's/old/new/'` | replaces text in the output (file unchanged) | `sed 's/::1/localhost/'` |
+
+```console
+admin123@admin:~$ awk '{print $9}' /var/log/nginx/access.log | sort | uniq -c
+    102 200
+     25 304
+     32 404
+admin123@admin:~$ awk '{print $1}' /var/log/nginx/access.log | sort | uniq -c | sort -rn | head -n 3 | sed 's/::1/localhost/'
+    132 localhost
+     27 192.168.207.1
+```
+
+**Top IP** (`awk '{print $1}' | sort | uniq -c | sort -rn | head`) is the first thing to run when a site gets slow: is one client flooding it?
+
+The numbers did not match my plan (expected 31 × 404 and 101 × 200): the browser also requested `/favicon.ico` (one extra 404), and its refreshes were `304`, not `200`. The log shows what really happened.
+
+### Script: [`log_report.sh`](scripts/log_report.sh)
+
+Built in three steps: total only → add the two statistics with `"$log"` in place of the path → add a check that the file exists (`[ ! -f "$log" ]` → `exit 1`).
+
+```console
+admin123@admin:~$ ~/scripts/log_report.sh
+Total requests:
+159
+Status codes:
+    102 200
+     25 304
+     32 404
+Top 3 IPs:
+    132 ::1
+     27 192.168.207.1
+```
+
+With `log=/var/log/nginx/abc.log` it prints `Log file not found: /var/log/nginx/abc.log` and stops.
+
+Why `"$log"` in double quotes: bash splits an unquoted value on spaces, so a path like `/tmp/my log.txt` would become two arguments. Single quotes `'$log'` are not expanded at all, which is exactly why awk programs go in single quotes.
+
+## 6.7 Mistakes I made (Day 12)
+
+| Typed | Problem | Fix |
+|---|---|---|
+| warm-up: `head -n 5` for "last 3 lines" | head = first, tail = last | `tail -n 3 nginx/access.log` |
+| `wc-l` in the script | `line 4: wc-l: command not found` | `wc -l`: a space separates command and option |
