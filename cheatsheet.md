@@ -265,3 +265,35 @@ Unit file skeleton: `[Unit] Description=` · `[Service] ExecStart=/absolute/path
 | `rmdir dir` | delete an **empty** directory (safer than `rm -r`) |
 
 ⚠️ Day 10: forgot `$` when reading a variable (`"dir"`); dropped spaces (`[ -d"$1" ]`, `backup -`); used `mkdir` to "create" a script file (use `nano`/`touch`).
+
+## Logs and troubleshooting (Day 11)
+
+| Command | Meaning |
+|---|---|
+| `sudo journalctl -u nginx -n 20 --no-pager` | last 20 log lines of a service (`-u` = **service name**) |
+| `sudo journalctl -u nginx -b` | since this boot |
+| `sudo journalctl -u nginx --since today` | since midnight (`yesterday`, `"1 hour ago"`) |
+| `sudo journalctl --since "2026-11-13 06:55" --until "2026-11-13 06:57"` | everything in a time window |
+| `sudo journalctl -u nginx -f` | follow live, `Ctrl+C` to stop |
+| `sudo nginx -t` | test nginx config **before** restarting |
+| `sudo ss -tlnp \| grep :80` | who is listening on port 80 |
+| `sudo kill <PID>` / `sudo kill -9 <PID>` | ask a process to exit / force it |
+| `cmd &` | run in the background |
+
+⚠️ Day 11: `-u` with a file path → `-- No entries --`; check the **date** of an error line; `chown :group f` (only the group); `chmod` on a root-owned file needs `sudo`; forgot `kill`.
+
+## Text processing (Day 12)
+
+| Command | Meaning |
+|---|---|
+| `curl http://localhost/` / `curl -s -o /dev/null URL` | fetch a page / quietly, discard the page |
+| `for i in $(seq 1 100); do ...; done` | repeat 100 times |
+| `grep " 404 " file \| wc -l` | count lines containing ` 404 ` |
+| `awk '{print $1}' file` | print field 1 of each line (fields split on spaces) |
+| `sort \| uniq -c` | count identical lines (sort first!) |
+| `sort -rn \| head -n 3` | biggest numbers first, top 3 |
+| `sed 's/old/new/'` | replace text in the output |
+
+nginx access log: `$1` = IP, `$9` = status. Top IP: `awk '{print $1}' access.log | sort | uniq -c | sort -rn | head -n 3`
+
+⚠️ Day 12: `head` vs `tail` mixed up; `wc-l` (missing space).
