@@ -167,3 +167,51 @@ touch secret.txt && ls -l secret.txt   # -rw-------
 | Day 7: did not know what `-m` in `useradd -m` does | — | `-m` = **m**ake the home directory `/home/<name>` |
 | `sudo ls -l srv/dev` | `No such file or directory` | leading `/`: `/srv/dev` |
 | `sudo -l /srv/dev` | wrong output | forgot `ls`: `sudo ls -l /srv/dev` |
+
+## 2.9 Rebuild check (Day 11)
+
+On Day 11 I rebuilt the whole setup from this chapter with new names, to prove the chapter is enough on its own. The Day 3 users and `/srv/dev` were still on the VM, so the rebuild used `tom`, `jerry`, `eve`, group `ops` and `/srv/ops`.
+
+```bash
+sudo useradd -m -s /bin/bash tom
+sudo useradd -m -s /bin/bash jerry
+sudo useradd -m -s /bin/bash eve
+sudo groupadd ops
+sudo usermod -aG ops tom
+sudo usermod -aG ops jerry
+sudo mkdir /srv/ops
+sudo chown root:ops /srv/ops
+sudo chmod 770 /srv/ops
+```
+
+Order to remember: **create group → add people → create directory → hand directory to group**. A group (`ops`) and a directory (`/srv/ops`) are two different things that only share a name.
+
+Verify:
+
+```console
+admin123@admin:~$ id jerry
+uid=1006(jerry) gid=1007(jerry) groups=1007(jerry),1009(ops)
+admin123@admin:~$ id eve
+uid=1007(eve) gid=1008(eve) groups=1008(eve)
+admin123@admin:~$ ls -ld /srv/ops
+drwxrwx--- 2 root ops 4096 Nov 13 07:34 /srv/ops
+admin123@admin:~$ sudo -u tom touch /srv/ops/tom.txt
+admin123@admin:~$ sudo -u tom ls -l /srv/ops
+total 0
+-rw-r--r-- 1 tom tom 0 Nov 13 07:40 tom.txt
+admin123@admin:~$ sudo -u eve touch /srv/ops/eve.txt
+touch: setting times of '/srv/ops/eve.txt': Permission denied
+```
+
+Result: same behaviour as Day 3. `tom` (in `ops`) can create files; `eve` (not owner, not in `ops`) only gets the "others" set `---`.
+
+Mistakes during the rebuild:
+
+| Typed | Error | Why / fix |
+|---|---|---|
+| `chmod 770 /srv/ops` | `Operation not permitted` | after `chown root:ops` I am no longer the owner; only the owner (or root) can `chmod` → `sudo chmod 770 /srv/ops` |
+| `chmod 770 ops` | `No such file or directory` | `ops` is relative to my current directory `~`; write the absolute path `/srv/ops` |
+| warm-up: could not write `ls -l /srv` | — | a path starting with `/` is absolute and works from anywhere |
+| warm-up: could not recall how to change only the group | — | `sudo chown :adm f` (before the colon = owner, after = group, same order as `ls -l` columns 3 and 4) |
+
+Reading errors: `Operation not permitted` / `Permission denied` → think permissions or `sudo`; `No such file or directory` → check the path.

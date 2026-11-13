@@ -265,3 +265,19 @@ Unit file skeleton: `[Unit] Description=` · `[Service] ExecStart=/absolute/path
 | `rmdir dir` | delete an **empty** directory (safer than `rm -r`) |
 
 ⚠️ Day 10: forgot `$` when reading a variable (`"dir"`); dropped spaces (`[ -d"$1" ]`, `backup -`); used `mkdir` to "create" a script file (use `nano`/`touch`).
+
+## Logs and troubleshooting (Day 11)
+
+| Command | Meaning |
+|---|---|
+| `sudo journalctl -u nginx -n 20 --no-pager` | last 20 log lines of a service (`-u` = **service name**) |
+| `sudo journalctl -u nginx -b` | since this boot |
+| `sudo journalctl -u nginx --since today` | since midnight (`yesterday`, `"1 hour ago"`) |
+| `sudo journalctl --since "2026-11-13 06:55" --until "2026-11-13 06:57"` | everything in a time window |
+| `sudo journalctl -u nginx -f` | follow live, `Ctrl+C` to stop |
+| `sudo nginx -t` | test nginx config **before** restarting |
+| `sudo ss -tlnp \| grep :80` | who is listening on port 80 |
+| `sudo kill <PID>` / `sudo kill -9 <PID>` | ask a process to exit / force it |
+| `cmd &` | run in the background |
+
+⚠️ Day 11: `-u` with a file path → `-- No entries --`; check the **date** of an error line; `chown :group f` (only the group); `chmod` on a root-owned file needs `sudo`; forgot `kill`.

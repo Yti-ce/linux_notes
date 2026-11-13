@@ -78,6 +78,10 @@ Installed nginx and saw that `start`/`stop` (now) and `enable`/`disable` (at boo
 
 Learned exit codes (`$?`, 0 = success, 127 = command not found), variables, arguments (`$1`, `$#`), `$(...)`, `[ ]` tests, `if`/`else`, `for` and functions. Built three scripts step by step: [`backup.sh`](handbook/scripts/backup.sh), [`rename.sh`](handbook/scripts/rename.sh), [`disk_alert.sh`](handbook/scripts/disk_alert.sh). Testing found real bugs: a backup script that printed "created" and returned 0 when tar had failed, a `[ -d"$1" ]` test that was always true, and `"dir"` without `$`. Handbook: [Chapter 5](handbook/05-scripts.md).
 
+## Day 11 — Logs and troubleshooting
+
+Warm-up: could not write `ls -l /srv` (absolute path) or change only a file's group (`sudo chown :adm f`); `chmod 640` right. Rebuilt the Chapter 2 permissions lab from scratch with new names (`tom`, `jerry`, `eve`, group `ops`, `/srv/ops` 770): all checks passed ([2.9](handbook/02-permissions.md#29-rebuild-check-day-11)). Then `journalctl` (`-u`, `-n`, `-b`, `--since/--until`, `--no-pager`) and three failures caused on purpose and fixed from the logs: nginx config syntax error, port 80 already in use (`ss -tlnp`, `kill`), and a missing execute bit on the custom service (`203/EXEC`). Also traced a real nginx restart to a system update. Handbook: [Chapter 6](handbook/06-logs.md).
+
 ## Server Setup Handbook
 
 Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md). Every topic from Day 1 on has a chapter; the handbook's "Find by day" table maps each day to its section.
@@ -117,6 +121,11 @@ How the files fit together:
 | `backup.sh` with no argument printed "Backup created", exit 0 | No input check; `$?` came from the final `echo` | `-z` / `! -d` guards with `exit 1` |
 | `rename.sh` said an existing directory "is not a directory" | `[ ! -d "dir" ]`: missing `$` | `"$dir"`; always test the success case |
 | `~/scirpts/disk_alert.sh` → exit 127 | Typo in the path | 127 = command not found: check spelling |
+| `chmod 770 /srv/ops` → `Operation not permitted` | After `chown root:ops` I was no longer the owner | `sudo chmod` |
+| `sudo systemctl restart nginx` → `Job for nginx.service failed` | Missing `;` in `sites-available/default` (on purpose) | `journalctl -u nginx` → `[emerg] ... :23`; fix, `sudo nginx -t`, restart |
+| nginx `bind() to 0.0.0.0:80 failed (98: Address already in use)` | Another program (python3) held port 80 (on purpose) | `sudo ss -tlnp \| grep :80`, `sudo kill <PID>`, start nginx |
+| `timestamp.service` `status=203/EXEC`, `Permission denied` | Script lost its `x` bit (on purpose) | `sudo chmod 755 /usr/local/bin/timestamp.sh` |
+| `journalctl -u /usr/local/bin/timestamp.sh` → `-- No entries --` | `-u` takes the service name | `journalctl -u timestamp` |
 
 ## Key concepts learned
 
