@@ -88,6 +88,10 @@ Warm-up: could not write `ls -l /srv` (absolute path) or change only a file's gr
 
 Warm-up: absolute path and pipe right; used `head` where `tail` was asked. Generated 159 requests with `curl` in a `for` loop (plus browser refreshes from Windows), read the access log field by field, and counted status codes and top IPs with `awk | sort | uniq -c | sort -rn | head`; `sed 's/old/new/'` for replacing text. Wrapped it in [`log_report.sh`](handbook/scripts/log_report.sh) with a missing-file check. Handbook: [6.6](handbook/06-logs.md#66-log-analysis-nginx-access-log-day-12).
 
+## Day 13 — Scheduled jobs with cron
+
+First pass on 11-13, redone from scratch on 11-16. Warm-up: `head` for "last lines" again, `--since` missing its `--`; `chown admin123 f` right. Found the backup test job still running every 2 minutes (108 archives), fixed it to `0 2 * * *` and cleaned up with `ls` before `rm`. Added timestamps to `disk_alert.sh` output, compared terminal and cron PATH (same on this Ubuntu, via `/etc/environment`), and broke cron twice on purpose: a bare script name (`not found`) and an unescaped `%` (command cut short, output discarded; found in `journalctl -u cron`). Handbook: [Chapter 7](handbook/07-cron.md).
+
 ## Server Setup Handbook
 
 Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md). Every topic from Day 1 on has a chapter; the handbook's "Find by day" table maps each day to its section.
@@ -134,6 +138,9 @@ How the files fit together:
 | `journalctl -u /usr/local/bin/timestamp.sh` → `-- No entries --` | `-u` takes the service name | `journalctl -u timestamp` |
 | `log_report.sh: line 4: wc-l: command not found` | Missing space | `wc -l` |
 | 32 × 404 and only 102 × 200 instead of 31 / 101+ | Browser also asked for `/favicon.ico`; refreshes returned `304` | Expected; read the log, not the guess |
+| `/bin/sh: 1: /home/admin123/scripts/bcakup.sh: not found` in cron.log | Typo in the crontab line | `backup.sh` |
+| 108 backup archives after 3 days | `*/2` test schedule never switched to daily | `0 2 * * *`; `ls` the pattern, then `rm` |
+| cron job `echo "$(date +%F) test"` wrote nothing at all | `%` = newline in crontab: command cut, redirection lost, output discarded (no MTA) | `\%`, or keep `%` inside scripts |
 
 ## Key concepts learned
 

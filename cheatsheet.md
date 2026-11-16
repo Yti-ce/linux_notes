@@ -297,3 +297,18 @@ Unit file skeleton: `[Unit] Description=` · `[Service] ExecStart=/absolute/path
 nginx access log: `$1` = IP, `$9` = status. Top IP: `awk '{print $1}' access.log | sort | uniq -c | sort -rn | head -n 3`
 
 ⚠️ Day 12: `head` vs `tail` mixed up; `wc-l` (missing space).
+
+## Scheduled jobs: cron (Day 13)
+
+| Command / syntax | Meaning |
+|---|---|
+| `crontab -l` / `crontab -e` | list / edit my jobs |
+| `min hour day month weekday command` | five time fields, then the command |
+| `*` / `*/5` / `0` | every / every 5 / only at 0 |
+| `0 2 * * *` | daily 02:00 (VM time = UTC) |
+| `... >> /home/admin123/cron.log 2>&1` | append output **and errors** to a log |
+| `\%` | a literal `%` inside a crontab line |
+| `sudo journalctl -u cron --since "10 min ago"` | did cron run it? (`CMD (...)` lines) |
+| `ls pattern*` then `rm pattern*` | preview before deleting with a wildcard |
+
+⚠️ Day 13: `*8***` (no spaces, minute should be `0`); `bcakup.sh`; typed the `<dir>` placeholder; no absolute path; left a `*/2` test job running; `head` for the last lines (use `tail`).

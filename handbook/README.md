@@ -24,7 +24,7 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 | [4](04-systemd.md) | Service management with systemd: nginx, custom unit, boot test | Day 9 | ✅ Day 9 |
 | [5](05-scripts.md) | Ops scripts: bash basics, backup, batch rename, disk alert ([`scripts/`](scripts/)) | Day 10 | ✅ Day 10 |
 | [6](06-logs.md) | Logs and troubleshooting: `journalctl`, 3 failures on purpose, log analysis | Day 11–12 | ✅ Day 11–12 |
-| 7 | Scheduled jobs: `crontab`, environment in cron | Day 13 | ⏳ Day 13 |
+| [7](07-cron.md) | Scheduled jobs: `crontab`, time fields, PATH and `%` pitfalls | Day 13 | ✅ Day 13 |
 | Appendix A | Troubleshooting record: 5 failure scenarios | Day 14 | ⏳ Day 14 |
 | 8–12 | Networking, SSH hardening, firewall, nginx reverse proxy | Week 3–4 | ⏳ Week 3–4 |
 
@@ -44,5 +44,6 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 | 10 | Shell scripting, 3 ops scripts | [Chapter 5](05-scripts.md) |
 | 11 | Permissions rebuild; `journalctl`, breaking and fixing nginx / timestamp | [2.9](02-permissions.md#29-rebuild-check-day-11), [6.1–6.5](06-logs.md) |
 | 12 | grep / awk / sed, nginx access log analysis, `log_report.sh` | [6.6](06-logs.md#66-log-analysis-nginx-access-log-day-12) |
+| 13 | cron: scheduled backup and disk check, breaking and fixing cron jobs | [Chapter 7](07-cron.md) |
 
 Quick lookup of single commands: [cheatsheet.md](../cheatsheet.md).
