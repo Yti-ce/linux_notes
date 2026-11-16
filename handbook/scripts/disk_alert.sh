@@ -11,8 +11,8 @@ fi
 usage=$(df --output=pcent / | tail -n 1 | tr -d ' %')
 
 if [ "$usage" -gt "$threshold" ]; then
-    echo "ALERT: disk usage $usage% is above $threshold%"
+    echo "$(date) ALERT: disk usage $usage% is above $threshold%"
     exit 1
 else
-    echo "OK: disk usage $usage%"
+    echo "$(date) OK: disk usage $usage%"
 fi
