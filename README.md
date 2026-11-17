@@ -111,6 +111,10 @@ Then five failures caused on purpose and fixed from the handbook only: nginx con
 
 Warm-up (closed book): `tail -n 5` ✅; ⭐ `ss -tlnp` right but `grep : 22` (stray space); ⭐ `daemon-reload` remembered but given a service name and no `sudo` on restart. Learned the TCP/IP and OSI models, captured a ping with `tcpdump` (8 packets, saved as `ping.pcap`), copied it to Windows with `scp` and marked the link, network and ICMP layers in Wireshark. Found that the destination MAC is the NAT gateway's (`ip route`, `ip neigh`), not Google's, and that the reply's TTL of 128 points to VMware NAT on the Windows host. Handbook: [8.1](handbook/08-networking.md#81-layers-and-packet-capture).
 
+## Day 16 — IP addresses and subnets
+
+Warm-up: ⭐ `chown :dev /srv/dev` right (second time in a row); `df -h /` right but `du` without `sort -h`; `unique` for `uniq`. Learned IPv4 structure, CIDR prefix vs subnet mask, network and broadcast addresses, and the block-size method. Worked out my VM's network (`192.168.207.0/24`, broadcast `.255`, 254 hosts) and matched it with `ip addr` (`brd`) and `ip route`. **10/10** on the closed-book subnet questions after four mistakes while learning (2⁷, wrong block size, range start, misread prefix). Handbook: [8.2](handbook/08-networking.md#82-ip-addresses-and-subnets).
+
 ## Server Setup Handbook
 
 Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md). Every topic from Day 1 on has a chapter; the handbook's "Find by day" table maps each day to its section.

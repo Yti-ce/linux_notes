@@ -331,6 +331,12 @@ Layers: content → L7 application · port → L4 transport · IP, ICMP → L3 n
 
 ⚠️ Day 15: ran `scp` inside the VM; `.pacp`; ICMP is L3 (no port), not L7; `grep : 22` (space).
 
+## Subnets (Day 16)
+
+`/N` = first N bits are the network. Block size = 2^(32−N); usable = block − 2. /24 256 · /25 128 · /26 64 · /27 32 · /28 16 · /29 8 · /30 4.
+Network = start of the block the address falls in; broadcast = network + block − 1. **Write prefix and block size first.**
+`ip addr` shows `inet x/N` and `brd` (broadcast); `ip route` shows the network address.
+
 ## Day 14 quiz and troubleshooting
 
 Quiz 6/20 (closed book). Full record of the 5 failure scenarios: [handbook Appendix A](handbook/appendix-a-troubleshooting.md).

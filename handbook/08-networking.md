@@ -149,3 +149,107 @@ TTL hints at the sender's OS and how many hops away it is.
 | `$HOME\Desktop\` in bash | trailing `\` = "command continues on the next line" | Windows paths only in PowerShell |
 | ICMP = layer 7 | ICMP is part of layer 3 | no port → not layer 4+ |
 | the `ls` I type over SSH = link layer | it is the data itself | application layer |
+
+## 8.2 IP addresses and subnets
+
+Learned on **Day 16** (2026-11-17, evening).
+
+### An IPv4 address
+
+`192.168.207.130` = 4 numbers, each **0–255** because each is 8 bits (`11111111` = 255) → 32 bits in total.
+
+An address has two parts, like a street and a house number:
+
+```text
+192.168.207 . 130          (with /24)
+network part  host part
+```
+
+Two addresses can talk directly (via MAC/ARP, no router) only if their **network parts match**. With `/24`: `192.168.207.9` is on my VM's network; `192.168.208.130` is not.
+
+### Prefix (CIDR) and subnet mask
+
+`/24` = the first 24 bits are the network part. The subnet mask writes the same thing with 1s for the network bits:
+
+```text
+/24 = 11111111.11111111.11111111.00000000 = 255.255.255.0
+```
+
+`/24` (CIDR) and `255.255.255.0` (mask) mean exactly the same.
+
+### How many addresses
+
+```text
+host bits     = 32 − prefix
+total         = 2^(host bits)          ← the "block size"
+usable hosts  = total − 2
+```
+
+The first address (host bits all 0) is the **network address**; the last (host bits all 1) is the **broadcast address** (sent to every device on the network, e.g. an ARP "who has …?"). Neither can be given to a device.
+
+| Prefix | Host bits | Block size | Usable | Mask (last byte) |
+|---|---|---|---|---|
+| /24 | 8 | 256 | 254 | .0 |
+| /25 | 7 | 128 | 126 | .128 |
+| /26 | 6 | 64 | 62 | .192 |
+| /27 | 5 | 32 | 30 | .224 |
+| /28 | 4 | 16 | 14 | .240 |
+| /29 | 3 | 8 | 6 | .248 |
+| /30 | 2 | 4 | 2 | .252 |
+
+Each +1 on the prefix halves the block.
+
+### Block-size method (no binary needed)
+
+Example `192.168.1.100/26`:
+
+1. **Write the prefix and block size first:** /26 → 2⁶ = **64**.
+2. Cut the last number into blocks from 0: `0–63 | 64–127 | 128–191 | 192–255`.
+3. 100 falls in **64–127**.
+4. First of the block = network **.64**; last = broadcast **.127** (= network + block − 1); usable **.65–.126**, **62** hosts.
+
+### My VM
+
+```console
+admin123@admin:~$ ip addr show ens33
+    inet 192.168.207.130/24 ... brd 192.168.207.255 ...
+admin123@admin:~$ ip route
+192.168.207.0/24 dev ens33 proto kernel scope link src 192.168.207.130 metric 100
+```
+
+| | Value |
+|---|---|
+| Prefix / block | /24 → 256 (the whole last byte is one block) |
+| Network address | 192.168.207.0 (the `ip route` line) |
+| Broadcast | 192.168.207.255 (`brd` in `ip addr`) |
+| Usable | .1–.254, 254 hosts |
+| In use | .1 Windows host · .2 NAT gateway · .128–.253 DHCP pool (my VM: .130) · .254 DHCP server |
+
+This is also why `ssh` to `192.168.207.255` on Day 1 could not work: it is the broadcast address, not a machine.
+
+### 10 practice questions (closed book, 10/10)
+
+| # | Address | Network | Broadcast | Usable range | Hosts |
+|---|---|---|---|---|---|
+| 1 | 192.168.1.10/24 | .0 | .255 | .1–.254 | 254 |
+| 2 | 192.168.1.130/25 | .128 | .255 | .129–.254 | 126 |
+| 3 | 172.16.5.70/26 | .64 | .127 | .65–.126 | 62 |
+| 4 | 10.1.1.45/27 | .32 | .63 | .33–.62 | 30 |
+| 5 | 192.168.10.200/28 | .192 | .207 | .193–.206 | 14 |
+| 6 | 192.168.0.13/29 | .8 | .15 | .9–.14 | 6 |
+| 7 | 10.0.0.6/30 | .4 | .7 | .5–.6 | 2 |
+| 8 | 172.16.0.250/26 | .192 | .255 | .193–.254 | 62 |
+
+9. A department needs **50** hosts → **/26** (62 usable); /27 gives only 30.
+10. With /27: `.33` and `.62` are on the same network (both in .32–.63); `.33` and `.64` are not (.64 starts the next block).
+
+### Mistakes I made (Day 16, while learning)
+
+| Wrote | Problem | Fix |
+|---|---|---|
+| /25 → 224 addresses | 2⁷ is 128 | count: 2, 4, 8, 16, 32, 64, 128, 256 |
+| `192.168.1.200/27` → broadcast .255, range .193–.254 | cut the blocks by 64 instead of 32 | blocks of 32: .192–.223 → broadcast .223 |
+| `10.0.0.77/28` → range .63–.78 | range starts **after** the network address | .65–.78 |
+| my VM `/24` worked out as /26 (.128 / .191) | read the prefix wrong | always write prefix + block size first |
+| warm-up: `unique -c` | no such command | `uniq -c` |
+| warm-up: `du -sh /var/*` without sorting | biggest directory hard to spot | `sudo du -sh /var/* 2>/dev/null \| sort -h` |
