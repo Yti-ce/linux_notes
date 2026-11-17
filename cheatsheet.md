@@ -316,6 +316,21 @@ nginx access log: `$1` = IP, `$9` = status. Top IP: `awk '{print $1}' access.log
 
 ⚠️ Day 13: `*8***` (no spaces, minute should be `0`); `bcakup.sh`; typed the `<dir>` placeholder; no absolute path; left a `*/2` test job running; `head` for the last lines (use `tail`).
 
+## Networking basics (Day 15)
+
+| Command | Meaning |
+|---|---|
+| `sudo tcpdump -i ens33 -n icmp` | print ping packets on `ens33` live (`Ctrl+C` to stop) |
+| `sudo tcpdump -i ens33 -n icmp -c 8 -w ~/ping.pcap` | capture 8 packets into a file for Wireshark |
+| `ping -c 4 8.8.8.8` | send 4 pings, then stop |
+| `scp admin123@<vm-ip>:~/ping.pcap $HOME\Desktop\` | **on Windows**: copy a file from the VM (side with `user@host:` = remote) |
+| `ip route` | routing table; `default via` = gateway |
+| `ip neigh` | ARP cache: neighbours' IP → MAC |
+
+Layers: content → L7 application · port → L4 transport · IP, ICMP → L3 network · MAC, ARP → L2 data link. IP = final destination, MAC = next hop. TTL start: Linux 64, Windows 128, −1 per router.
+
+⚠️ Day 15: ran `scp` inside the VM; `.pacp`; ICMP is L3 (no port), not L7; `grep : 22` (space).
+
 ## Day 14 quiz and troubleshooting
 
 Quiz 6/20 (closed book). Full record of the 5 failure scenarios: [handbook Appendix A](handbook/appendix-a-troubleshooting.md).

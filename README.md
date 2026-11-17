@@ -107,6 +107,10 @@ Week 1 was 17/20, week 2 is 6/20: services, logs and text tools need repetition,
 
 Then five failures caused on purpose and fixed from the handbook only: nginx config error, disk filled to 97%, shared directory with the wrong group, port 80 taken by another program, cron job whose script lost `x`. All five fixed; the three ⭐ commands were each used correctly at least once. Gaps found in the handbook (`du`, hidden files, `sudo nano` for root-owned configs) are now covered. Handbook: [Appendix A](handbook/appendix-a-troubleshooting.md).
 
+## Day 15 — Network layers and packet capture
+
+Warm-up (closed book): `tail -n 5` ✅; ⭐ `ss -tlnp` right but `grep : 22` (stray space); ⭐ `daemon-reload` remembered but given a service name and no `sudo` on restart. Learned the TCP/IP and OSI models, captured a ping with `tcpdump` (8 packets, saved as `ping.pcap`), copied it to Windows with `scp` and marked the link, network and ICMP layers in Wireshark. Found that the destination MAC is the NAT gateway's (`ip route`, `ip neigh`), not Google's, and that the reply's TTL of 128 points to VMware NAT on the Windows host. Handbook: [8.1](handbook/08-networking.md#81-layers-and-packet-capture).
+
 ## Server Setup Handbook
 
 Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md). Every topic from Day 1 on has a chapter; the handbook's "Find by day" table maps each day to its section.

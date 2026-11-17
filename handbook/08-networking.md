@@ -1,0 +1,151 @@
+# Chapter 8 — Networking basics, verified on the VM
+
+Goal: understand how a packet is built, and prove each idea on my own VM instead of only reading about it. 8.1 learned on **Day 15** (2026-11-17); 8.2 (IP and subnets) follows on Day 16.
+
+## 8.1 Layers and packet capture
+
+### The TCP/IP model (4 layers)
+
+Every packet is wrapped layer by layer, like a parcel: each layer adds its own **header** around what the layer above gave it (**encapsulation**). The receiver unwraps from the outside in.
+
+```text
+[ Ethernet header [ IP header [ TCP/ICMP header [ data ] ] ] ]
+```
+
+| Layer | Job | Parcel analogy | Seen on my VM |
+|---|---|---|---|
+| 4 Application | what the data **is** | the goods in the box | HTTP (`curl localhost`), SSH, the `ls` I type over SSH |
+| 3 Transport | which **program** on the machine | recipient's name | TCP, **ports**: 22 = sshd, 80 = nginx |
+| 2 Network (Internet) | which **machine**, end to end | delivery address | **IP**: `192.168.207.130`, ICMP, TTL |
+| 1 Link | which device **next**, inside this LAN | the courier's hand-off slip | **MAC**, ARP, NIC `ens33` |
+
+Rule of thumb: content → application; port → transport; IP → network; MAC / NIC → link.
+
+### The OSI model (7 layers)
+
+The textbook model splits the same stack more finely. Interviews ask about it.
+
+| OSI | Name | TCP/IP | Examples |
+|---|---|---|---|
+| **7** | Application | Application | HTTP, SSH, DNS |
+| 6 | Presentation | Application | encryption, encoding |
+| 5 | Session | Application | keeping a connection open |
+| **4** | Transport | Transport | TCP, UDP, ports |
+| **3** | Network | Network | IP, ICMP, routers |
+| **2** | Data Link | Link | MAC, ARP, Ethernet, switches |
+| 1 | Physical | Link | cable, fibre, Wi-Fi signal |
+
+Bottom-up mnemonic: **P**lease **D**o **N**ot **T**hrow **S**ausage **P**izza **A**way.
+
+"Layer 2 problem" = MAC / switch / ARP; "Layer 3 problem" = IP / routing; "L4 load balancer" = by IP + port; "L7 load balancer" = by HTTP content.
+
+### Capture a ping with tcpdump
+
+`tcpdump` prints every packet that passes a network interface. Two SSH windows: A captures, B pings.
+
+```console
+# window A
+admin123@admin:~$ sudo tcpdump -i ens33 -n icmp
+listening on ens33, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+09:16:42.979892 IP 192.168.207.130 > 8.8.8.8: ICMP echo request, id 19790, seq 1, length 64
+09:16:42.986651 IP 8.8.8.8 > 192.168.207.130: ICMP echo reply, id 19790, seq 1, length 64
+...
+^C
+8 packets captured
+
+# window B
+admin123@admin:~$ ping -c 4 8.8.8.8
+```
+
+| Part | Meaning |
+|---|---|
+| `-i ens33` | only this interface |
+| `-n` | show IPs as numbers, no name lookups |
+| `icmp` | filter: only ping packets (otherwise my own SSH traffic floods the screen) |
+| `-c 8` | stop after 8 packets (`ping -c 4` = send 4: 4 requests + 4 replies = 8) |
+| `-w file.pcap` | write packets to a file instead of printing |
+
+Reading a line: time · `IP` · source `>` destination · `ICMP echo request` (ping) / `echo reply` (answer) · `seq` number. Request → reply took about 7 ms, the same as `ping` reports. **No port numbers**: ICMP sits directly in IP (layer 3) and never uses TCP.
+
+Save to a file and copy it to Windows:
+
+```console
+admin123@admin:~$ sudo tcpdump -i ens33 -n icmp -c 8 -w ~/ping.pcap
+8 packets captured
+admin123@admin:~$ ls -l ~/ping.pcap
+-rw-r--r-- 1 tcpdump tcpdump 936 Nov 17 09:20 /home/admin123/ping.pcap
+```
+
+The file is owned by `tcpdump`: after starting with `sudo`, tcpdump drops to its own unprivileged user before writing (least privilege). Others still have `r`, so I can copy it.
+
+```powershell
+# Windows PowerShell — NOT inside the VM
+PS C:\Users\HP> scp admin123@192.168.207.130:~/ping.pcap $HOME\Desktop\
+ping.pcap                                  100%  936   457.1KB/s   00:00
+```
+
+`scp source destination`, like `cp`. The side with `user@host:` is the remote machine (path after `:` is on that machine); the side without it is the local machine. Upload = swap the two sides.
+
+### Read the layers in Wireshark
+
+Opened `ping.pcap` in Wireshark (Windows). Top pane = packet list, middle = layers of the selected packet, bottom = raw bytes.
+
+![Packet 1 in Wireshark with the link, network and ICMP layers marked](images/day15-wireshark-layers.png)
+
+Packet 1 (echo request):
+
+| Wireshark line | Layer | Key fields |
+|---|---|---|
+| Frame 1 | — (capture info, not a real header) | 98 bytes |
+| Ethernet II | 2 Data Link | Src `00:0c:29:fb:c4:c2` (my VM), **Dst `00:50:56:e2:d7:15`** |
+| Internet Protocol Version 4 | 3 Network | Src `192.168.207.130`, Dst `8.8.8.8`, **TTL 64**, Protocol ICMP (1) |
+| Internet Control Message Protocol | 3 Network (ICMP rides inside IP) | Type 8 = echo request, seq 1 |
+
+No TCP/UDP line: ping does not use the transport layer.
+
+### Finding 1: the destination MAC is not Google's
+
+The packet goes to `8.8.8.8`, but the destination MAC belongs to a VMware device. Checked on the VM:
+
+```console
+admin123@admin:~$ ip route
+default via 192.168.207.2 dev ens33 proto dhcp src 192.168.207.130 metric 100
+192.168.207.0/24 dev ens33 proto kernel scope link src 192.168.207.130 metric 100
+admin123@admin:~$ ip neigh
+192.168.207.1 dev ens33 lladdr 00:50:56:c0:00:08 REACHABLE
+192.168.207.254 dev ens33 lladdr 00:50:56:fe:3c:5b STALE
+192.168.207.2 dev ens33 lladdr 00:50:56:e2:d7:15 STALE
+```
+
+The default gateway is `192.168.207.2`, and its MAC is exactly the destination MAC in the capture.
+
+- **IP = final destination**, unchanged end to end.
+- **MAC = next hop** on the local network, rewritten at every router.
+
+The VM learns a neighbour's MAC with **ARP** (broadcast "who has 192.168.207.2?"); answers are cached in `ip neigh`. All three neighbours start with `00:50:56`, VMware's vendor prefix.
+
+| Address | Device (VMware NAT defaults) |
+|---|---|
+| .1 | Windows host, VMnet8 adapter (my SSH client → `REACHABLE`) |
+| .2 | NAT gateway |
+| .128–.253 | DHCP pool; my VM got .130 (was .129 before a reboot) |
+| .254 | VMware DHCP server |
+
+### Finding 2: TTL 64 out, 128 back
+
+TTL (Time to Live) = how many routers a packet may still cross; each router subtracts 1, at 0 it is dropped (stops routing loops). Default start: **Linux 64, Windows 128**.
+
+- Request: TTL **64** → just left my Linux VM, no router passed yet (captured on the VM's own NIC).
+- Reply: TTL **128**, exactly Windows' start value with nothing subtracted. Most likely the VMware NAT service on the Windows host built this reply itself instead of forwarding Google's original packet (which would arrive as a start value minus a dozen or so hops).
+
+TTL hints at the sender's OS and how many hops away it is.
+
+### Mistakes I made (Day 15)
+
+| Typed | Problem | Fix |
+|---|---|---|
+| `scp ...` inside the VM | prompt was `admin123@admin:~$`; scp must run on Windows | check the prompt: `PS C:\...>` = Windows |
+| `ping.pacp` | typo | `.pcap` = packet capture |
+| `$HOME\Desktop\` in bash | trailing `\` = "command continues on the next line" | Windows paths only in PowerShell |
+| ICMP = layer 7 | ICMP is part of layer 3 | no port → not layer 4+ |
+| the `ls` I type over SSH = link layer | it is the data itself | application layer |
