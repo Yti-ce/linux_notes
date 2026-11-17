@@ -92,6 +92,21 @@ Warm-up: absolute path and pipe right; used `head` where `tail` was asked. Gener
 
 First pass on 11-13, redone from scratch on 11-16. Warm-up: `head` for "last lines" again, `--since` missing its `--`; `chown admin123 f` right. Found the backup test job still running every 2 minutes (108 archives), fixed it to `0 2 * * *` and cleaned up with `ls` before `rm`. Added timestamps to `disk_alert.sh` output, compared terminal and cron PATH (same on this Ubuntu, via `/etc/environment`), and broke cron twice on purpose: a bare script name (`not found`) and an unescaped `%` (command cut short, output discarded; found in `journalctl -u cron`). Handbook: [Chapter 7](handbook/07-cron.md).
 
+## Day 14 — Week 2 quiz and troubleshooting drill
+
+**Quiz: 6/20** (closed book, 4 rounds of 5).
+
+| Round | Result | Missed |
+|---|---|---|
+| Processes and systemd | 1/5 | `systemctl` verb order and `enable` vs `enabled`; `ss -tlnp`; `journalctl -u`; `daemon-reload` after editing a unit file |
+| Shell scripts | 2/5 | `#!` written as `!#`; `( )` instead of `[ ]` in `if`; `$0` / `$?`; `chmod +x` without a file name |
+| Text processing | 1/5 | `cat` instead of `tail -f`; `awk '{print $1}'`; `uniq -c` vs `wc -l`; `sed 's/foo/bar/g'` |
+| cron and permissions | 2/5 | `journalctl -u cron`; ⭐ `chown :ops` written as `chmod` (5th time) |
+
+Week 1 was 17/20, week 2 is 6/20: services, logs and text tools need repetition, not new material. Weak spots are marked ⭐ in [cheatsheet.md](cheatsheet.md) and go into the daily warm-up.
+
+Then five failures caused on purpose and fixed from the handbook only: nginx config error, disk filled to 97%, shared directory with the wrong group, port 80 taken by another program, cron job whose script lost `x`. All five fixed; the three ⭐ commands were each used correctly at least once. Gaps found in the handbook (`du`, hidden files, `sudo nano` for root-owned configs) are now covered. Handbook: [Appendix A](handbook/appendix-a-troubleshooting.md).
+
 ## Server Setup Handbook
 
 Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md). Every topic from Day 1 on has a chapter; the handbook's "Find by day" table maps each day to its section.
@@ -141,6 +156,10 @@ How the files fit together:
 | `/bin/sh: 1: /home/admin123/scripts/bcakup.sh: not found` in cron.log | Typo in the crontab line | `backup.sh` |
 | 108 backup archives after 3 days | `*/2` test schedule never switched to daily | `0 2 * * *`; `ls` the pattern, then `rm` |
 | cron job `echo "$(date +%F) test"` wrote nothing at all | `%` = newline in crontab: command cut, redirection lost, output discarded (no MTA) | `\%`, or keep `%` inside scripts |
+| nginx `unexpected "}" in /etc/nginx/conf.d/test.conf:1` | Missing `;` after `listen 8080` (on purpose) | `sudo nano` the file, `sudo nginx -t`, restart |
+| Disk 97% full | 17 GB hidden file `/var/tmp/.cache_data` (on purpose); `du dir/*` skipped it | `du -sh` level by level, `ls -lah`, `rm` |
+| tom: `Permission denied` in `/srv/ops` | Directory group changed to `root` (on purpose); first fixes used `dev`, then tom's private group | `sudo chown :ops /srv/ops`, test tom **and** jerry |
+| cron job never wrote `hello.log` | Script had no `x` bit; error discarded (`No MTA installed`) | `chmod +x`; add `>> log 2>&1` to every cron line |
 
 ## Key concepts learned
 

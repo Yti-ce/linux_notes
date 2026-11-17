@@ -25,7 +25,7 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 | [5](05-scripts.md) | Ops scripts: bash basics, backup, batch rename, disk alert ([`scripts/`](scripts/)) | Day 10 | ✅ Day 10 |
 | [6](06-logs.md) | Logs and troubleshooting: `journalctl`, 3 failures on purpose, log analysis | Day 11–12 | ✅ Day 11–12 |
 | [7](07-cron.md) | Scheduled jobs: `crontab`, time fields, PATH and `%` pitfalls | Day 13 | ✅ Day 13 |
-| Appendix A | Troubleshooting record: 5 failure scenarios | Day 14 | ⏳ Day 14 |
+| [A](appendix-a-troubleshooting.md) | Troubleshooting record: symptom → first command, 5 failure scenarios | Day 14 | ✅ Day 14 |
 | 8–12 | Networking, SSH hardening, firewall, nginx reverse proxy | Week 3–4 | ⏳ Week 3–4 |
 
 ## Find by day
@@ -45,5 +45,6 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 | 11 | Permissions rebuild; `journalctl`, breaking and fixing nginx / timestamp | [2.9](02-permissions.md#29-rebuild-check-day-11), [6.1–6.5](06-logs.md) |
 | 12 | grep / awk / sed, nginx access log analysis, `log_report.sh` | [6.6](06-logs.md#66-log-analysis-nginx-access-log-day-12) |
 | 13 | cron: scheduled backup and disk check, breaking and fixing cron jobs | [Chapter 7](07-cron.md) |
+| 14 | Week 2 quiz (6/20); 5 failure scenarios: config error, full disk, wrong group, port in use, cron | results in [README](../README.md#day-14--week-2-quiz-and-troubleshooting-drill); [Appendix A](appendix-a-troubleshooting.md) |
 
 Quick lookup of single commands: [cheatsheet.md](../cheatsheet.md).
