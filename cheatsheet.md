@@ -2,7 +2,7 @@
 
 Built from hands-on practice on Ubuntu Server 26.04.1. Updated as the plan goes on.
 
-Items marked ⚠️ are ones I got wrong or had to look up in the Day 7 quiz. Permissions explained in depth (Chinese): [permissions-guide.md](permissions-guide.md). Step-by-step setup by topic: [handbook/](handbook/README.md).
+Items marked ⚠️ are ones I got wrong or had to look up in the Day 7 quiz. ⭐ = top weak spots from the Day 14 quiz (6/20): practise them every day. Permissions explained in depth (Chinese): [permissions-guide.md](permissions-guide.md). Step-by-step setup by topic: [handbook/](handbook/README.md).
 
 ## Filesystem hierarchy (FHS)
 
@@ -119,6 +119,7 @@ Day 7: `sudo touch /quiz` silently created an empty root-owned file at the top o
 | `chmod 640 f` | ⚠️ numeric: r=4 w=2 x=1. **Add inside each set, then write the 3 digits side by side** |
 | `sudo chown quizuser f` | ⚠️ change the **owner** (ch-own). Always needs `sudo` |
 | `sudo chown root:dev /srv/dev` | change owner **and** group (`owner:group`) |
+| ⭐ `sudo chown :ops /srv/ops` | change **only the group** (nothing before `:`). Not `chmod`! Shared dirs → the **team** group, not the user's private group |
 | `sudo chown -R alice:dev dir` | the directory and everything inside |
 | `ls -ld dir` | permissions of the directory itself |
 | `umask` / `umask 077` | show / set default mask (file = 666 − umask) |
@@ -235,8 +236,8 @@ Why still learn vim: `vi`/`vim` exists on almost every server and minimal image;
 |---|---|
 | `systemctl status svc` | state; `Active:` = running now, `enabled` = starts at boot |
 | `sudo systemctl start / stop / restart svc` | now |
-| `sudo systemctl enable / disable svc` | at boot (independent of start/stop) |
-| `sudo systemctl daemon-reload` | after creating/editing a unit file in `/etc/systemd/system/` |
+| `sudo systemctl enable / disable svc` | at boot (independent of start/stop). ⚠️ order is **verb, then service**; `enable` not `enabled` |
+| ⭐ `sudo systemctl daemon-reload` | after creating/editing a **unit (.service) file**, then `restart`. Not `nginx -t` (that tests nginx's own config) |
 | `sudo reboot` | restart the VM; the DHCP IP may change afterwards |
 | `curl http://localhost` | fetch a web page from the command line |
 
@@ -276,7 +277,9 @@ Unit file skeleton: `[Unit] Description=` · `[Service] ExecStart=/absolute/path
 | `sudo journalctl --since "2026-11-13 06:55" --until "2026-11-13 06:57"` | everything in a time window |
 | `sudo journalctl -u nginx -f` | follow live, `Ctrl+C` to stop |
 | `sudo nginx -t` | test nginx config **before** restarting |
-| `sudo ss -tlnp \| grep :80` | who is listening on port 80 |
+| ⭐ `sudo ss -tlnp \| grep :80` | who is listening on port 80 (**t**cp **l**istening **n**umeric **p**rocess) |
+| `tail -f /var/log/syslog` | follow a log file live (`cat` prints once and stops) |
+| `sudo du -sh /* 2>/dev/null \| sort -h` | which directory is biggest (last line); repeat one level deeper. `*` skips hidden files → `sudo ls -lah dir` |
 | `sudo kill <PID>` / `sudo kill -9 <PID>` | ask a process to exit / force it |
 | `cmd &` | run in the background |
 
@@ -312,3 +315,9 @@ nginx access log: `$1` = IP, `$9` = status. Top IP: `awk '{print $1}' access.log
 | `ls pattern*` then `rm pattern*` | preview before deleting with a wildcard |
 
 ⚠️ Day 13: `*8***` (no spaces, minute should be `0`); `bcakup.sh`; typed the `<dir>` placeholder; no absolute path; left a `*/2` test job running; `head` for the last lines (use `tail`).
+
+## Day 14 quiz and troubleshooting
+
+Quiz 6/20 (closed book). Full record of the 5 failure scenarios: [handbook Appendix A](handbook/appendix-a-troubleshooting.md).
+
+⚠️ Day 14: `systemctl nginx enabled` (order, `enable`); `journalctl` without `-u` / misspelt; `!#` instead of `#!`; `if ( ... )` instead of `[ ]`; `$0` = script name, `$?` = last exit code, `$@` = all args; `awk` program needs `'{print $1}'` (with `$`); `wc -l` counts lines, `uniq -c` counts each value; `sed 's/a/b/g' file` (needs `s` and `g`, reads the file itself); `ls -l dir` lists contents, `ls -ld dir` shows the directory; reproduce a cron failure as the cron user, not with `sudo`.
