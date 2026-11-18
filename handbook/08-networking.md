@@ -423,3 +423,140 @@ Rule: **same network works, other networks don't → check the gateway first** (
 | warm-up: /24 → 255 addresses, 253 usable | 255 is the highest number, not the count (numbering starts at 0) | 2⁸ = **256**, usable **254** |
 | `ip address 192.168.2.1 255.255.255.` + Enter | mask missing its last `0` | retype the whole line |
 | `end` typed again at `Router#` | unknown word → IOS tries to telnet to a host called "end" and looks it up in DNS (`Translating "end"...`) | `Ctrl+Shift+6` to abort; `no ip domain-lookup` once in config mode |
+
+## 8.4 DHCP and ARP
+
+Learned on Day 18. Two helpers that run before any real traffic:
+
+- **DHCP**: a new machine has no IP; DHCP rents it one (plus mask, gateway, DNS).
+- **ARP**: a machine knows the next hop's **IP** but needs its **MAC** to put the frame on the wire.
+
+### ARP: IP → MAC
+
+IP = final destination (same for the whole trip). MAC = next hop (changes at every router).
+
+1. Broadcast on the local network: "Who has 192.168.207.2? Tell me your MAC."
+2. Only `.2` replies, directly: "That's me, `00:50:56:e2:d7:15`."
+3. The answer is cached, so the next packet doesn't ask again.
+
+```console
+admin123@admin:~$ ip neigh
+192.168.207.1 dev ens33 lladdr 00:50:56:c0:00:08 REACHABLE
+192.168.207.254 dev ens33 lladdr 00:50:56:fe:3c:5b STALE
+192.168.207.2 dev ens33 lladdr 00:50:56:e2:d7:15 STALE
+```
+
+| IP | Who | How I know |
+|---|---|---|
+| `.1` | Windows (VMnet8 adapter) | same MAC `00 50 56 c0 00 08` as VMnet8 in Windows `route print` |
+| `.2` | NAT gateway (also DNS) | `default via` in `ip route` |
+| `.254` | VMware DHCP server | `DHCPv4 via` in `networkctl` (below) |
+
+- `lladdr` = link-layer (MAC) address. `REACHABLE` = confirmed recently (my SSH session keeps `.1` busy); `STALE` = not used for a while, re-checked before next use.
+- `00:50:56` = VMware's vendor prefix; the first 3 bytes of a MAC identify the maker.
+- **`.254` is a machine, `.255` is broadcast.** Broadcast is not a host, so it never shows up in `ip neigh`. Usable: .1–.254.
+- ARP is why the **first** ping in Packet Tracer timed out: the PC was still asking for the gateway's MAC.
+
+### DHCP: four steps (DORA)
+
+| Step | From → to | Says |
+|---|---|---|
+| **D**iscover | client → broadcast | "Any DHCP server? I need an address" |
+| **O**ffer | server → client | "You can have .130" |
+| **R**equest | client → broadcast | "I'll take .130" |
+| **A**ck | server → client | "Confirmed, it's yours for N seconds" |
+
+It's a **lease**: the client renews before it runs out. If the old address is taken after a reboot, the client gets a different one (my VM went .129 → .130 on Day 8). The server remembers MAC → IP, so normally you get the same one back.
+
+### The VM's lease
+
+```console
+admin123@admin:~$ networkctl status ens33
+             Address: 192.168.207.130 (DHCPv4 via 192.168.207.254)
+                      fe80::20c:29ff:fefb:c4c2
+             Gateway: 192.168.207.2
+                 DNS: 192.168.207.2
+```
+
+DHCP server `.254`, gateway `.2`, DNS `.2` (VMware NAT also forwards DNS, see 8.5). `fe80::` is the IPv6 link-local address.
+
+```console
+admin123@admin:~$ sudo journalctl -u systemd-networkd -b --no-pager | grep -i dhcp
+Nov 13 06:56:00 admin systemd-networkd[9213]: ens33: DHCPv4 address 192.168.207.130/24, gateway 192.168.207.2 acquired from 192.168.207.254
+Nov 17 04:40:11 admin systemd-networkd[9213]: ens33: DHCP lease lost
+Nov 17 04:40:13 admin systemd-networkd[9213]: ens33: DHCPv4 address 192.168.207.130/24, gateway 192.168.207.2 acquired from 192.168.207.254
+Nov 17 10:58:27 admin systemd-networkd[9213]: ens33: DHCP lease lost
+Nov 17 14:19:34 admin systemd-networkd[21921]: ens33: DHCPv4 address 192.168.207.130/24, gateway 192.168.207.2 acquired from 192.168.207.254
+```
+
+- One `acquired` line holds IP, gateway and DHCP server.
+- `lease lost` then `acquired` again = the renewal didn't happen in time (most likely the laptop slept or the VM was suspended), so the VM ran DORA again and got **.130 back**.
+- VM log times are UTC; add 8 h for local time.
+- Use `-b` (whole current boot), not `-n 20`: `-n 20` takes only the last 20 lines **before** `grep`, so older DHCP lines are missed.
+
+`169.254.x.x` on any adapter (seen on the unused VMnet adapters on Day 17) = asked DHCP, nobody answered, picked an address itself.
+
+### Lab: router as DHCP server in Packet Tracer
+
+File: [`labs/day18-dhcp.pkt`](labs/day18-dhcp.pkt) (built on the Day 17 topology in 8.3).
+
+```
+enable
+configure terminal
+no ip domain-lookup
+interface g0/0
+ ip address 192.168.1.1 255.255.255.0
+ no shutdown
+interface g0/1                          ! no need to exit first
+ ip address 192.168.2.1 255.255.255.0
+ no shutdown
+exit
+ip dhcp excluded-address 192.168.1.1 192.168.1.9   ! never hand these out (.1 router, .2–.9 kept for servers)
+ip dhcp pool LAN-A                                 ! prompt: Router(dhcp-config)#
+ network 192.168.1.0 255.255.255.0                 ! which network to hand out from
+ default-router 192.168.1.1                        ! the gateway clients get
+ dns-server 8.8.8.8                                ! the DNS server clients get
+end
+copy running-config startup-config                 ! short: wr; Enter at the filename prompt → [OK]
+```
+
+PC0 → IP Configuration → **DHCP**: got `192.168.1.10`, mask `255.255.255.0`, gateway `192.168.1.1`, DNS `8.8.8.8` (fields grey = assigned, not typed). `.10` = first address after the excluded `.1–.9`.
+
+![PC0 settings received from DHCP](images/day18-pc0-dhcp.png)
+
+**Simulation mode** (bottom right → Simulation; Edit Filters → only DHCP; PC0 Static → DHCP again; step with ▶|):
+
+![DHCP events in Packet Tracer simulation](images/day18-pt-dhcp-events.png)
+
+| Time (s) | Path | Message |
+|---|---|---|
+| 0.002 | PC0 → Switch0 → Router0 | Discover |
+| 1.515 | Router0 → Switch0 → PC0 | Offer |
+| 1.517 | PC0 → Switch0 → Router0 | Request |
+| 1.519 | Router0 → Switch0 → PC0 | Ack |
+
+- Each message shows as **two rows** because it passes Switch0.
+- Rows at 0.000–0.001 are PC0 resetting its address when switched back to DHCP, not part of DORA.
+- ~1.5 s between Discover and Offer: a Cisco DHCP server pings the address first to make sure nobody uses it.
+- Click a row's coloured square → the DHCP layer names the message (`OFFER` etc.).
+
+### running-config vs startup-config (learned by accident)
+
+I clicked **Power Cycle Devices** (restarts everything) and the router came back empty.
+
+| | Where | After restart |
+|---|---|---|
+| `running-config` | RAM; every command takes effect here | **lost** |
+| `startup-config` | NVRAM; read at boot | kept |
+
+Save after every change: `copy running-config startup-config` (or `wr`). PC settings in Packet Tracer survive a power cycle; router settings only if saved.
+
+### Mistakes I made (Day 18)
+
+| Wrote | Problem | Fix |
+|---|---|---|
+| warm-up: `sudo systemctl deamon-reload` | spelling | `daemon` (d-a-e-mon) |
+| warm-up: `chown :ops /srv/ops` | right command (3rd time), no `sudo` → `Operation not permitted` | `sudo chown :ops /srv/ops` |
+| `journalctl -u systemd-networkd -n 20 \| grep -i dhcp` | `-n 20` cuts before `grep`, older lines missed | `-b` for the whole boot |
+| thought `.254` might be broadcast | broadcast is `.255`; `.254` is the DHCP server | usable .1–.254, broadcast .255 |
+| clicked Power Cycle Devices | router config was never saved | `copy running-config startup-config` after each change |

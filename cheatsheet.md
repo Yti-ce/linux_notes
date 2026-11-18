@@ -357,6 +357,21 @@ Troubleshooting: same network works, other networks don't → check the gateway.
 
 ⚠️ Day 17: /24 = **256** addresses, 254 usable (not 255/253); mask typed as `255.255.255.`; extra `end` at `Router#` → `Translating "end"`.
 
+## DHCP and ARP (Day 18)
+
+| Command | Meaning |
+|---|---|
+| `ip neigh` | ARP cache: neighbour IP → MAC (`lladdr`); `REACHABLE` recent, `STALE` old |
+| `networkctl status ens33` | my IP and where it came from (`DHCPv4 via`), gateway, DNS |
+| `sudo journalctl -u systemd-networkd -b --no-pager \| grep -i dhcp` | DHCP history since boot (`acquired`, `lease lost`) |
+| `ip dhcp excluded-address <first> <last>` | **Cisco**: never hand out these |
+| `ip dhcp pool NAME` → `network` / `default-router` / `dns-server` | **Cisco**: a DHCP pool |
+| `copy running-config startup-config` (`wr`) | **Cisco**: save, or a restart loses everything |
+
+DORA: Discover (broadcast) → Offer → Request (broadcast) → Ack. `00:50:56` = VMware MAC. `.254` DHCP server ≠ `.255` broadcast.
+
+⚠️ Day 18: `deamon-reload` → `daemon`; `chown` without `sudo`; `-n 20` before `grep` misses lines (use `-b`); Power Cycle without `wr`.
+
 ## Day 14 quiz and troubleshooting
 
 Quiz 6/20 (closed book). Full record of the 5 failure scenarios: [handbook Appendix A](handbook/appendix-a-troubleshooting.md).
