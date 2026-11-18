@@ -119,6 +119,12 @@ Warm-up: ⭐ `chown :dev /srv/dev` right (second time in a row); `df -h /` right
 
 Warm-up: ⭐ `sudo ss -tlnp | grep :80` right (first time closed book); `journalctl -u nginx -n 20 --no-pager` right; /24 answered as 255 addresses / 253 usable (it is 256 / 254). Read the VM's routing table (`ip route`, `ip route get`), traced the path to 8.8.8.8 (first hop = VMware NAT gateway `.2`), and found the two NATs between the VM and the internet (`curl ifconfig.me`, `ipconfig`). Found a second, hand-added default route on Windows (VMnet1, metric 291) that loses to Wi-Fi (metric 200). Built two networks and one router in Packet Tracer: `ping` across with TTL 127, `tracert` shows the gateway first, and removing PC0's gateway breaks only cross-network traffic. Handbook: [8.3](handbook/08-networking.md#83-routing-and-nat).
 
+## Day 18 — DHCP and ARP, week review
+
+Warm-up: ⭐ `daemon-reload` remembered but spelt `deamon`; ⭐ `chown :ops /srv/ops` right for the third time but without `sudo`; skipped the gateway question. Read the VM's ARP cache (`ip neigh`: `.1` Windows, `.2` gateway, `.254` DHCP server, matched by MAC) and its DHCP lease (`networkctl status`, `journalctl -u systemd-networkd`), including two `lease lost` → `acquired` cycles that gave back the same `.130`. In Packet Tracer, made the router a DHCP server (PC0 got `.10`, the first address after the excluded `.1–.9`) and watched Discover → Offer → Request → Ack in Simulation mode. Lost the router config with Power Cycle and learned `copy running-config startup-config`. Handbook: [8.4](handbook/08-networking.md#84-dhcp-and-arp).
+
+**Week review (Days 15–18).** Most useful: starting to use the network for real (ICMP, Wireshark, DHCP, routing) instead of only learning commands. Still weak: commands I recognise when I see them but can't write from memory, so the warm-up now also picks one command not tested for a while. Pace stays the same: one new idea at a time, then hands-on in the VM or Packet Tracer.
+
 ## Server Setup Handbook
 
 Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md). Every topic from Day 1 on has a chapter; the handbook's "Find by day" table maps each day to its section.
