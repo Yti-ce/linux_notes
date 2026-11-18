@@ -26,7 +26,7 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 | [6](06-logs.md) | Logs and troubleshooting: `journalctl`, 3 failures on purpose, log analysis | Day 11–12 | ✅ Day 11–12 |
 | [7](07-cron.md) | Scheduled jobs: `crontab`, time fields, PATH and `%` pitfalls | Day 13 | ✅ Day 13 |
 | [A](appendix-a-troubleshooting.md) | Troubleshooting record: symptom → first command, 5 failure scenarios | Day 14 | ✅ Day 14 |
-| [8](08-networking.md) | Networking basics: TCP/IP and OSI layers, tcpdump, Wireshark, MAC vs IP, TTL; IP and subnets (8.2) | Day 15–16 | ✅ Day 15–16 |
+| [8](08-networking.md) | Networking basics: TCP/IP and OSI layers, tcpdump, Wireshark, MAC vs IP, TTL; IP and subnets (8.2); routing and NAT, Packet Tracer lab (8.3) | Day 15–17 | ✅ Day 15–17 |
 | 9–12 | SSH hardening, firewall, nginx reverse proxy | Week 3–4 | ⏳ Week 3–4 |
 
 ## Find by day
@@ -49,5 +49,6 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 | 14 | Week 2 quiz (6/20); 5 failure scenarios: config error, full disk, wrong group, port in use, cron | results in [README](../README.md#day-14--week-2-quiz-and-troubleshooting-drill); [Appendix A](appendix-a-troubleshooting.md) |
 | 15 | TCP/IP and OSI layers; capture a ping with tcpdump, read it in Wireshark | [8.1](08-networking.md#81-layers-and-packet-capture) |
 | 16 | IP addresses, prefix and mask, block-size method, 10 subnet questions | [8.2](08-networking.md#82-ip-addresses-and-subnets) |
+| 17 | Routing table, default gateway, traceroute, NAT; two networks and a router in Packet Tracer | [8.3](08-networking.md#83-routing-and-nat) |
 
 Quick lookup of single commands: [cheatsheet.md](../cheatsheet.md).

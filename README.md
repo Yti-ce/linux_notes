@@ -115,6 +115,10 @@ Warm-up (closed book): `tail -n 5` ✅; ⭐ `ss -tlnp` right but `grep : 22` (st
 
 Warm-up: ⭐ `chown :dev /srv/dev` right (second time in a row); `df -h /` right but `du` without `sort -h`; `unique` for `uniq`. Learned IPv4 structure, CIDR prefix vs subnet mask, network and broadcast addresses, and the block-size method. Worked out my VM's network (`192.168.207.0/24`, broadcast `.255`, 254 hosts) and matched it with `ip addr` (`brd`) and `ip route`. **10/10** on the closed-book subnet questions after four mistakes while learning (2⁷, wrong block size, range start, misread prefix). Handbook: [8.2](handbook/08-networking.md#82-ip-addresses-and-subnets).
 
+## Day 17 — Routing, gateways and NAT
+
+Warm-up: ⭐ `sudo ss -tlnp | grep :80` right (first time closed book); `journalctl -u nginx -n 20 --no-pager` right; /24 answered as 255 addresses / 253 usable (it is 256 / 254). Read the VM's routing table (`ip route`, `ip route get`), traced the path to 8.8.8.8 (first hop = VMware NAT gateway `.2`), and found the two NATs between the VM and the internet (`curl ifconfig.me`, `ipconfig`). Found a second, hand-added default route on Windows (VMnet1, metric 291) that loses to Wi-Fi (metric 200). Built two networks and one router in Packet Tracer: `ping` across with TTL 127, `tracert` shows the gateway first, and removing PC0's gateway breaks only cross-network traffic. Handbook: [8.3](handbook/08-networking.md#83-routing-and-nat).
+
 ## Server Setup Handbook
 
 Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md). Every topic from Day 1 on has a chapter; the handbook's "Find by day" table maps each day to its section.
