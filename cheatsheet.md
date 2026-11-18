@@ -372,6 +372,26 @@ DORA: Discover (broadcast) → Offer → Request (broadcast) → Ack. `00:50:56`
 
 ⚠️ Day 18: `deamon-reload` → `daemon`; `chown` without `sudo`; `-n 20` before `grep` misses lines (use `-b`); Power Cycle without `wr`.
 
+## DNS (Day 19)
+
+| Command | Meaning |
+|---|---|
+| `dig google.com` | look up A records; read `ANSWER SECTION` and `SERVER` |
+| `dig google.com +noall +answer` | answer lines only (`name TTL IN type value`) |
+| `dig <name> A\|AAAA\|MX\|CNAME\|NS +short` | one record type, results only |
+| `dig <name> @8.8.8.8` | ask a specific DNS server (compare servers when troubleshooting) |
+| `dig -4 +trace google.com @8.8.8.8` | walk root → .com → authoritative yourself |
+| `resolvectl status` | the real upstream DNS server per interface |
+| `cat /etc/resolv.conf` | `nameserver 127.0.0.53` = local systemd-resolved (do not edit) |
+| `getent hosts <name>` | resolve like programs do: `/etc/hosts` first, then DNS |
+| `sudo nano /etc/hosts` | add `IP   name` for a local-only name |
+| `find /etc -name "*.conf" 2>/dev/null` | find files by name, drop permission errors |
+| `tar -czf x.tar.gz dir` / `tar -xzf x.tar.gz` | pack + gzip / unpack (`c` create, `x` extract, `z` gzip, `f` file) |
+
+Forwarder passes the question up; recursive resolver walks root → TLD → authoritative; authoritative holds the original records. TTL = seconds an answer may be cached. MX: lower number first. Trailing `.` = root.
+
+⚠️ Day 19: /25 = 126 usable (not 125); tar only packs, `z` compresses; `.2` is gateway **and** DNS; `127.0.0.53` is a forwarder, not the resolver.
+
 ## Day 14 quiz and troubleshooting
 
 Quiz 6/20 (closed book). Full record of the 5 failure scenarios: [handbook Appendix A](handbook/appendix-a-troubleshooting.md).
