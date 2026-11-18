@@ -125,6 +125,10 @@ Warm-up: ⭐ `daemon-reload` remembered but spelt `deamon`; ⭐ `chown :ops /srv
 
 **Week review (Days 15–18).** Most useful: starting to use the network for real (ICMP, Wireshark, DHCP, routing) instead of only learning commands. Still weak: commands I recognise when I see them but can't write from memory, so the warm-up now also picks one command not tested for a while. Pace stays the same: one new idea at a time, then hands-on in the VM or Packet Tracer.
 
+## Day 19 — DNS
+
+Warm-up (new format: weak point + recent mistakes + older commands): ⭐ `daemon-reload` spelt right; `/27` question all right; `/25` right but 125 usable instead of 126; `find` by name and `tar -czf` not known (now on the weak-points list); `chmod 750` right. Followed a lookup from the VM: `127.0.0.53` (systemd-resolved) → `192.168.207.2` (VMware NAT, also the DNS server from DHCP) → upstream. Watched a TTL count down, queried A / AAAA / MX / CNAME / NS records, and walked root → .com → ns2.google.com with `dig +trace`. `+trace` first timed out because the local forwarders don't answer `. NS`; asking `@8.8.8.8` proved the network was fine. Added a name to `/etc/hosts` and saw that the local stub reads it but an outside DNS server does not. Handbook: [8.5](handbook/08-networking.md#85-dns).
+
 ## Server Setup Handbook
 
 Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md). Every topic from Day 1 on has a chapter; the handbook's "Find by day" table maps each day to its section.
