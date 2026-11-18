@@ -337,6 +337,26 @@ Layers: content → L7 application · port → L4 transport · IP, ICMP → L3 n
 Network = start of the block the address falls in; broadcast = network + block − 1. **Write prefix and block size first.**
 `ip addr` shows `inet x/N` and `brd` (broadcast); `ip route` shows the network address.
 
+## Routing and NAT (Day 17)
+
+| Command | Meaning |
+|---|---|
+| `ip route` | routing table: `default via X` = gateway; no `via` = same network, direct |
+| `ip route get 8.8.8.8` | which route the system actually picks for this address |
+| `sudo traceroute -n -I 8.8.8.8` | every hop on the way (`* * *` = hop did not answer, fine if the end answers) |
+| `curl -s ifconfig.me ; echo` | the public IP the internet sees (after NAT) |
+| `ipconfig \| findstr IPv4` | **Windows**: only the IPv4 lines |
+| `route print -4 0.0.0.0` | **Windows**: default routes; lower metric (跃点数) wins |
+| `tracert <ip>` | **Windows / Packet Tracer PC**: traceroute |
+| `conf t` → `int g0/0` → `ip address <ip> <mask>` → `no shutdown` | **Cisco**: give a router interface an IP and switch it on |
+| `sh ip int br` | **Cisco**: interfaces with IP and status (`up up` = working) |
+| `no ip domain-lookup` | **Cisco**: stop typos hanging on a DNS lookup |
+
+Private ranges: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`. `169.254.x.x` = DHCP failed. TTL start: Linux 64, Windows 128, Cisco 255.
+Troubleshooting: same network works, other networks don't → check the gateway.
+
+⚠️ Day 17: /24 = **256** addresses, 254 usable (not 255/253); mask typed as `255.255.255.`; extra `end` at `Router#` → `Translating "end"`.
+
 ## Day 14 quiz and troubleshooting
 
 Quiz 6/20 (closed book). Full record of the 5 failure scenarios: [handbook Appendix A](handbook/appendix-a-troubleshooting.md).

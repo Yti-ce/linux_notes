@@ -253,3 +253,173 @@ This is also why `ssh` to `192.168.207.255` on Day 1 could not work: it is the b
 | my VM `/24` worked out as /26 (.128 / .191) | read the prefix wrong | always write prefix + block size first |
 | warm-up: `unique -c` | no such command | `uniq -c` |
 | warm-up: `du -sh /var/*` without sorting | biggest directory hard to spot | `sudo du -sh /var/* 2>/dev/null \| sort -h` |
+
+## 8.3 Routing and NAT
+
+Learned on Day 17. One question decides where every packet goes: **is the destination on my network?**
+
+- **Yes** → send it straight to that machine (ARP finds its MAC, see 8.4).
+- **No** → hand it to the **default gateway** (a router), which forwards it on.
+
+### The routing table on the VM
+
+```console
+admin123@admin:~$ ip route
+default via 192.168.207.2 dev ens33 proto dhcp src 192.168.207.130 metric 100
+192.168.207.0/24 dev ens33 proto kernel scope link src 192.168.207.130 metric 100
+192.168.207.2 dev ens33 proto dhcp scope link src 192.168.207.130 metric 100
+```
+
+| Line | Meaning |
+|---|---|
+| `default via 192.168.207.2` | everything not matched below → gateway `.2` (VMware NAT) |
+| `192.168.207.0/24 dev ens33` | my own network: no `via`, sent directly |
+| `192.168.207.2 dev ens33` | added by DHCP: the gateway itself is directly reachable |
+| `metric 100` | priority when two routes match; **lower wins** |
+
+Ask the system which route it actually picks:
+
+```console
+admin123@admin:~$ ip route get 8.8.8.8
+8.8.8.8 via 192.168.207.2 dev ens33 src 192.168.207.130 uid 1000      ← via = through the gateway
+admin123@admin:~$ ip route get 192.168.207.1
+192.168.207.1 dev ens33 src 192.168.207.130 uid 1000                  ← no via = direct
+```
+
+### traceroute: every hop on the way
+
+Each router lowers TTL by 1; the router where it hits 0 sends back "time exceeded". traceroute sends TTL 1, 2, 3 … and lists who answered.
+
+```console
+admin123@admin:~$ sudo apt install -y traceroute
+admin123@admin:~$ sudo traceroute -n -I 8.8.8.8
+ 1  192.168.207.2  0.922 ms  0.860 ms  0.819 ms
+ 2  * * *
+ ...
+ 8  * * *
+ 9  8.8.8.8  8.532 ms  8.451 ms  8.373 ms
+```
+
+- `-n` numbers only (no DNS lookups), `-I` use ICMP like ping (needs `sudo`; gets more answers through VMware NAT).
+- Hop 1 is the default gateway from `ip route`.
+- `* * *` = that router did not answer (many ISPs block it). **Not a failure** as long as the destination answers at the end. Only stars from some hop all the way to 30 means the path breaks there.
+
+### NAT: why the internet never sees 192.168.207.130
+
+Private ranges (not routed on the internet): **`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`**.
+On the way out, a NAT gateway replaces the private source address with its own and swaps it back on the reply.
+
+```console
+admin123@admin:~$ curl -s ifconfig.me ; echo      # -s = silent, no progress bar
+161.142.151.164                                    # public, not in any private range
+```
+
+My VM goes through **two NATs**:
+
+```
+VM 192.168.207.130   (VMnet8, gateway .2)
+  → VMware NAT 192.168.207.2        NAT 1: source becomes Windows' 192.168.100.4
+  → home router 192.168.100.1       NAT 2: source becomes public 161.142.151.164
+  → internet → 8.8.8.8
+```
+
+On Windows, `ipconfig` (short version: `ipconfig | findstr IPv4`):
+
+| Adapter | IPv4 | Gateway | Note |
+|---|---|---|---|
+| WLAN | 192.168.100.4 | 192.168.100.1 | the one actually used for internet |
+| VMnet8 | 192.168.207.1 | (none) | Windows' own address on the VM network; **not** the gateway (that is `.2`) |
+| VMnet1 | 192.168.50.1 | 192.168.50.254 | host-only network, set by hand for course labs; leave it |
+| `169.254.x.x` adapters | — | — | asked DHCP, got no answer, picked an address itself → **169.254 = DHCP failed** |
+
+Why VMnet8 has no gateway: a machine should have **one** default exit. VMnet8 only talks to the VMs on its own /24, which needs no gateway. VM traffic leaves through the VMware NAT service, which uses Windows' normal WLAN route.
+
+VMware network types: **VMnet0 Bridged** (VM gets an address from the real router) · **VMnet1 Host-only** (no internet) · **VMnet8 NAT** (internet through `.2`).
+
+### Two default gateways, decided by metric (real example)
+
+```console
+PS C:\Users\HP> route print -4 0.0.0.0
+活动路由:
+网络目标        网络掩码          网关       接口   跃点数
+          0.0.0.0          0.0.0.0    192.168.100.1    192.168.100.4    200
+          0.0.0.0          0.0.0.0   192.168.50.254     192.168.50.1    291
+永久路由:
+          0.0.0.0          0.0.0.0   192.168.50.254     默认
+```
+
+Both are `0.0.0.0/0` (default). Metric 200 < 291 → WLAN is used; the VMnet1 route is only a fallback. It is listed under **永久路由**, so it was added by hand with `route -p add`. Risk: if Wi-Fi drops, Windows tries VMnet1 and fails. Kept for now (course labs).
+
+### Lab: two networks and one router in Packet Tracer
+
+File: [`labs/day17-routing.pkt`](labs/day17-routing.pkt) (Cisco Packet Tracer 9.0; local copy in `C:\Users\HP\Cisco Packet Tracer 9.0.0\saves\`).
+
+![Day 17 topology: PC0 – Switch0 – Router0 (2911) – Switch1 – PC1, all links green](images/day17-pt-topology.png)
+
+```
+PC0 192.168.1.10 ── Switch0 ── G0/0 192.168.1.1 [Router0] G0/1 192.168.2.1 ── Switch1 ── PC1 192.168.2.10
+      network A: 192.168.1.0/24                                    network B: 192.168.2.0/24
+```
+
+Router (2911, CLI tab; answer `no` to the setup dialog):
+
+```
+enable                                  ! Router#        (short: en)
+configure terminal                      ! Router(config)# (short: conf t)
+no ip domain-lookup                     ! stop typos from being looked up in DNS
+interface g0/0                          ! Router(config-if)#
+ ip address 192.168.1.1 255.255.255.0   ! Cisco takes a mask, not /24
+ no shutdown                            ! interfaces start "administratively down"
+interface g0/1
+ ip address 192.168.2.1 255.255.255.0
+ no shutdown
+end
+show ip interface brief                 ! short: sh ip int br
+```
+
+```
+Interface              IP-Address      OK? Method Status                Protocol
+GigabitEthernet0/0     192.168.1.1     YES manual up                    up
+GigabitEthernet0/1     192.168.2.1     YES manual up                    up
+GigabitEthernet0/2     unassigned      YES unset  administratively down down
+```
+
+Both columns `up` = cable connected **and** link working. `administratively down` = never given `no shutdown` (red link lights).
+
+PCs (Desktop → IP Configuration → Static): IP, mask `255.255.255.0`, **gateway = the router interface on their side** (`.1`).
+
+| PC | IPv4 | Gateway |
+|---|---|---|
+| PC0 | 192.168.1.10 | 192.168.1.1 |
+| PC1 | 192.168.2.10 | 192.168.2.1 |
+
+Test from PC0:
+
+```
+C:\>ping 192.168.2.10
+Request timed out.                                    ← first packet lost while ARP resolves the gateway's MAC
+Reply from 192.168.2.10: bytes=32 time<1ms TTL=127    ← 128 − 1 router = 127
+...
+C:\>tracert 192.168.2.10
+  1   0 ms   0 ms   0 ms   192.168.1.1                ← PC0's default gateway
+  2   2 ms   0 ms   0 ms   192.168.2.10
+```
+
+Reading TTL backwards: start values Linux **64**, Windows **128**, Cisco **255**. `TTL=127` → 1 router on the way; `ping 192.168.1.1` replied `TTL=255` → the router itself, 0 hops.
+
+### Broken on purpose: PC0 without a gateway
+
+| Test | Result | Why |
+|---|---|---|
+| `ping 192.168.1.1` | 4/4 replies | same network → sent directly, no gateway needed |
+| `ping 192.168.2.10` | `Request timed out` | other network → needs the gateway, and there is none |
+
+Rule: **same network works, other networks don't → check the gateway first** (`ip route` on Linux, `ipconfig` on Windows, IP Configuration in Packet Tracer).
+
+### Mistakes I made (Day 17)
+
+| Wrote | Problem | Fix |
+|---|---|---|
+| warm-up: /24 → 255 addresses, 253 usable | 255 is the highest number, not the count (numbering starts at 0) | 2⁸ = **256**, usable **254** |
+| `ip address 192.168.2.1 255.255.255.` + Enter | mask missing its last `0` | retype the whole line |
+| `end` typed again at `Router#` | unknown word → IOS tries to telnet to a host called "end" and looks it up in DNS (`Translating "end"...`) | `Ctrl+Shift+6` to abort; `no ip domain-lookup` once in config mode |
