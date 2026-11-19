@@ -707,7 +707,16 @@ admin123@admin:~$ dig winhost @192.168.207.2 +short
 
 I expected `dig winhost` to find nothing; it did find it because the local stub answers from `/etc/hosts`. Asking another server with `@` shows the hosts entry is local only.
 
-Windows has the same file: `C:\Windows\System32\drivers\etc\hosts` (edit as administrator). **To do:** add `192.168.207.130   ubuntu-lab`, then `ssh admin123@ubuntu-lab` from Windows. The VM's IP comes from DHCP, so this line must be updated if the IP changes (fixed by a static IP in week 4).
+Windows has the same file: `C:\Windows\System32\drivers\etc\hosts` (edit as administrator). Done on Day 20 (2026-11-19): Notepad did not save (not run as administrator, file date stayed 11/12), so the line was appended from an **administrator** PowerShell:
+
+```powershell
+Add-Content C:\Windows\System32\drivers\etc\hosts "`r`n192.168.207.130   ubuntu-lab"
+Get-Content C:\Windows\System32\drivers\etc\hosts -Tail 2   # check it is really there
+ping -n 2 ubuntu-lab        # Windows: -n = count (Linux uses -c)
+ssh admin123@ubuntu-lab     # user@name instead of user@IP
+```
+
+Result: `Pinging ubuntu-lab [192.168.207.130]`, TTL=64 (a Linux reply). ssh asked to trust the host key again because `known_hosts` stores keys **per name**; it also showed the same key was already known as .129/.130, so `yes` was safe. The VM's IP comes from DHCP, so this line must be updated if the IP changes (fixed by a static IP in week 4).
 
 ### Mistakes I made (Day 19)
 
@@ -718,3 +727,90 @@ Windows has the same file: `C:\Windows\System32\drivers\etc\hosts` (edit as admi
 | warm-up: tar | didn't know; thought tar = compress | `tar -czf scripts.tar.gz ~/scripts` (tar packs, `z` compresses; extract `-xzf`) |
 | thought `127.0.0.53` is the recursive resolver | it only forwards | the resolver is at the top of the chain; `+trace` makes dig the resolver |
 | thought `.2` is only the gateway | it is also the DNS forwarder (DHCP hands out both) | `networkctl status` / `resolvectl status` |
+
+## 8.6 Ports and connections
+
+*Day 20 (2026-11-19).* IP finds the machine, the **port** finds the program on it. One VM, one IP, but sshd, nginx and the DNS stub all listen at the same time; the port number decides who gets the data. Range 0–65535.
+
+### Who is listening: `ss -tlnp`
+
+```console
+admin123@admin:~$ sudo ss -tlnp      # t=TCP  l=listening  n=numbers  p=process (needs sudo)
+State   Local Address:Port    Process
+LISTEN  127.0.0.54:53         users:(("systemd-resolve",pid=9082,...))
+LISTEN  0.0.0.0:8080          users:(("nginx",pid=27832,...),...)
+LISTEN  127.0.0.53%lo:53      users:(("systemd-resolve",pid=9082,...))
+LISTEN  0.0.0.0:22            users:(("sshd",pid=9098,...),("systemd",pid=1,...))
+LISTEN  0.0.0.0:80            users:(("nginx",pid=27832,...),...)
+LISTEN  [::]:22               users:(("sshd",...))
+LISTEN  [::]:80               users:(("nginx",...))
+```
+
+| Local Address | Meaning |
+|---|---|
+| `0.0.0.0:22` | listen on **every** interface → reachable from Windows |
+| `127.0.0.53%lo:53` | listen on loopback `lo` only → only the VM itself can use it (that's why Windows can't use 127.0.0.53 as DNS) |
+| `[::]:80` | IPv6 version of "every interface" |
+
+`systemd pid=1` on port 22: on new Ubuntu, systemd holds the port first (`ssh.socket`) and hands connections to sshd.
+
+### Default ports
+
+A URL without a port uses the protocol's default: `http://ubuntu-lab` = `http://ubuntu-lab:80`.
+
+| Protocol | Port | Transport |
+|---|---|---|
+| ssh | 22 | TCP |
+| DNS | 53 | UDP (TCP for big answers) |
+| HTTP | 80 | TCP |
+| HTTPS | 443 | TCP |
+
+The **server** port is fixed so clients know where to go. The **client** port is an **ephemeral port** the client's OS picks (Windows: 49152–65535) and changes every connection. A connection = `client IP:client port ↔ server IP:server port`.
+
+### Lab: capture a TCP handshake
+
+VM (window A):
+
+```console
+admin123@admin:~$ sudo tcpdump -i ens33 -n port 80     # -i interface, -n numbers only, filter port 80
+```
+
+Windows PowerShell (window B): `curl.exe http://ubuntu-lab` (`curl.exe`, because plain `curl` in PowerShell is a different command).
+
+```text
+# Flags: S=SYN  .=ACK  P=push (has data)  F=FIN
+1 192.168.207.1.56695 > 192.168.207.130.80: Flags [S],  seq 3284085505                ┐
+2 192.168.207.130.80 > 192.168.207.1.56695: Flags [S.], seq 3106202503, ack 3284085506 │ 3-way handshake
+3 192.168.207.1.56695 > 192.168.207.130.80: Flags [.],  ack 1                          ┘
+4 192.168.207.1.56695 > 192.168.207.130.80: Flags [P.], length 74:  HTTP: GET / HTTP/1.1  ┐
+5 192.168.207.130.80 > 192.168.207.1.56695: Flags [.],  ack 75                           │ data
+6 192.168.207.130.80 > 192.168.207.1.56695: Flags [P.], length 862: HTTP: HTTP/1.1 200 OK ┘
+7 192.168.207.1.56695 > 192.168.207.130.80: Flags [F.]                                 ┐
+8 192.168.207.130.80 > 192.168.207.1.56695: Flags [F.]                                 │ close
+9 192.168.207.1.56695 > 192.168.207.130.80: Flags [.],  ack 864                        ┘
+```
+
+- **Handshake:** SYN → SYN-ACK → ACK. Only then is data sent.
+- **Close ("four-way"):** FIN/ACK/FIN/ACK, but the server merged its ACK and FIN into one `[F.]`, so only 3 packets show. Common.
+- `192.168.207.1` is Windows' own address on VMnet8. `56695` is the ephemeral port.
+
+Repeated against `:8080` twice: server port 8080 both times, client port **56706**, then **56708**: a new ephemeral port each time.
+
+### UDP: no handshake
+
+```console
+admin123@admin:~$ sudo tcpdump -i ens33 -n port 53     # other window: dig @8.8.8.8 example.com
+192.168.207.130.55653 > 8.8.8.8.53: 3475+ [1au] A? example.com. (52)
+8.8.8.8.53 > 192.168.207.130.55653: 3475$ 2/0/1 A 172.66.147.243, A 104.20.23.154 (72)
+2 packets captured
+```
+
+**2 packets**: one question, one answer. No SYN, no FIN. `3475` is the query ID that pairs the answer with the question (UDP has no connection, so it needs one). `2/0/1` = 2 answers.
+
+| | TCP | UDP |
+|---|---|---|
+| Handshake | yes | no |
+| Lost packet | resent automatically | the program's problem |
+| Like | a phone call | a text message |
+| Used by | HTTP/HTTPS, ssh | DNS, video calls, games |
+
