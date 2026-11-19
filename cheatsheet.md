@@ -392,6 +392,29 @@ Forwarder passes the question up; recursive resolver walks root → TLD → auth
 
 ⚠️ Day 19: /25 = 126 usable (not 125); tar only packs, `z` compresses; `.2` is gateway **and** DNS; `127.0.0.53` is a forwarder, not the resolver.
 
+## Ports and connections (Day 20)
+
+| Command | Meaning |
+|---|---|
+| ⭐ `sudo ss -tlnp \| grep :443` | who listens on a port (`0.0.0.0` = all interfaces, `127.x` = local only) |
+| `sudo tcpdump -i ens33 -n port 80` | capture one port; add `-A` to print contents as text |
+| `ping -n 2 ubuntu-lab` (Windows) / `ping -c 2 x` (Linux) | count is `-n` on Windows, `-c` on Linux |
+
+Default ports: ssh 22, DNS 53 (UDP), HTTP 80, HTTPS 443. Server port fixed, client port ephemeral. TCP: handshake `[S] [S.] [.]` → data `[P.]` → close `[F.] [F.] [.]`. UDP: no handshake (DNS = 2 packets).
+
+## HTTP and HTTPS (Day 21) — 🟢 must know closed-book
+
+| Command | Meaning |
+|---|---|
+| `curl -v http://ubuntu-lab` | full request (`>`) and response (`<`); Windows: `curl.exe` |
+| `curl -k https://ubuntu-lab` | skip certificate check (self-signed); `-vk` to also see details |
+| `tail -n 20 /var/log/nginx/access.log` | latest requests; status code = `awk '{print $9}'` |
+| `sudo nginx -t && sudo systemctl reload nginx` | test config, then apply |
+| `openssl s_client -connect host:443 -servername host < /dev/null` | (look up) see certificate subject / issuer / TLS version |
+| `sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout K -out C -subj "/CN=name"` | (look up) make a self-signed cert |
+
+Status: 200 OK · 301/302 redirect · 403 forbidden · 404 not found · 500/502 server error. subject = issuer → self-signed. `.key` 600, `.crt` 644.
+
 ## Day 14 quiz and troubleshooting
 
 Quiz 6/20 (closed book). Full record of the 5 failure scenarios: [handbook Appendix A](handbook/appendix-a-troubleshooting.md).
