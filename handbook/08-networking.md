@@ -967,3 +967,11 @@ admin123@admin:~$ sudo tcpdump -i ens33 -n -A port 443
 
 16 packets vs 9 for plain HTTP; the extra ones are the TLS handshake. `password=123456` can't be found; the **domain name still can** (SNI), and so can the IPs and ports.
 
+### Mistakes I made (Day 21)
+
+| Wrote | Problem | Fix |
+|---|---|---|
+| didn't remember where nginx logs requests | | `/var/log/nginx/access.log` (status = `$9`); errors in `error.log` |
+| private key "is encrypted, so you can't see it" | `-nodes` = **not** encrypted | it's protected only by permissions `600` |
+| skipped the "what does this mean" questions, just pasted output | the explanation is what interviews ask | answer in one sentence first, then paste |
+| URL walk-through: TCP → TLS → HTTP → FIN | missed DNS and routing/ARP before TCP; called the close "three-way handshake" | see [Appendix B](appendix-b-what-happens-url.md); the close is FIN/ACK ("four-way") |
