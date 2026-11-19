@@ -814,3 +814,16 @@ admin123@admin:~$ sudo tcpdump -i ens33 -n port 53     # other window: dig @8.8.
 | Like | a phone call | a text message |
 | Used by | HTTP/HTTPS, ssh | DNS, video calls, games |
 
+### Mistakes I made (Day 20)
+
+| Wrote | Problem | Fix |
+|---|---|---|
+| warm-up: `find /etc/*.conf &2>/dev/null` | "where" and "what" glued together; `&2>` is not a thing | `find /etc -name "*.conf" 2>/dev/null` |
+| warm-up: tar | forgot again | `tar -czf scripts.tar.gz ~/scripts` (c create, z gzip, f file name next) |
+| DNS review: resolved forwards to `.1` | `.1` is Windows on VMnet8; `.2` is the NAT gateway + DNS | `resolvectl status \| grep "DNS Servers"` |
+| DNS review: resolver asks root, then authoritative | skipped the `.com` (TLD) layer | root → `.com` → google's authoritative; first two only give referrals (NS) |
+| DNS review: `A` = the authoritative server's IP | `A` is the website's own IP | A = where the site is; NS = who is in charge of the name |
+| DNS review: `+trace` fails because `.2` can't walk down | with `+trace`, dig walks down itself | it fails at step 1: `.2` won't answer `. NS`; `@8.8.8.8` only replaces that step |
+| Windows hosts in Notepad | not run as administrator → not saved | admin PowerShell `Add-Content`, then check with `Get-Content -Tail` |
+| didn't know why curl went to 80 | `http://` defaults to 80 | write `:8080` to pick another port |
+| TCP phases: only named the handshake | a connection has 3 phases | handshake `[S] [S.] [.]` → data `[P.]` + `[.]` → close `[F.] [F.] [.]` |
