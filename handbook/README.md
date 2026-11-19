@@ -26,7 +26,8 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 | [6](06-logs.md) | Logs and troubleshooting: `journalctl`, 3 failures on purpose, log analysis | Day 11–12 | ✅ Day 11–12 |
 | [7](07-cron.md) | Scheduled jobs: `crontab`, time fields, PATH and `%` pitfalls | Day 13 | ✅ Day 13 |
 | [A](appendix-a-troubleshooting.md) | Troubleshooting record: symptom → first command, 5 failure scenarios | Day 14 | ✅ Day 14 |
-| [8](08-networking.md) | Networking basics: TCP/IP and OSI layers, tcpdump, Wireshark, MAC vs IP, TTL; IP and subnets (8.2); routing and NAT, Packet Tracer lab (8.3); DHCP and ARP (8.4); DNS (8.5) | Day 15–19 | ✅ Day 15–19 |
+| [8](08-networking.md) | Networking basics: TCP/IP and OSI layers, tcpdump, Wireshark, MAC vs IP, TTL; IP and subnets (8.2); routing and NAT, Packet Tracer lab (8.3); DHCP and ARP (8.4); DNS (8.5); ports and connections (8.6); HTTP and HTTPS (8.7) | Day 15–21 | ✅ Day 15–21 |
+| [B](appendix-b-what-happens-url.md) | What happens when you type a URL: DNS → TCP → TLS → HTTP on one page | Day 21 | ✅ Day 21 |
 | 9–12 | SSH hardening, firewall, nginx reverse proxy | Week 3–4 | ⏳ Week 3–4 |
 
 ## Find by day
@@ -52,5 +53,7 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 | 17 | Routing table, default gateway, traceroute, NAT; two networks and a router in Packet Tracer | [8.3](08-networking.md#83-routing-and-nat) |
 | 18 | ARP cache, DHCP (DORA, lease), router as DHCP server in Packet Tracer, running vs startup config | [8.4](08-networking.md#84-dhcp-and-arp) |
 | 19 | DNS lookup chain, TTL, record types, `dig +trace` (and fixing it with `@8.8.8.8`), `/etc/hosts` | [8.5](08-networking.md#85-dns) |
+| 20 | DNS review; Windows hosts → `ssh admin123@ubuntu-lab`; ports, `ss -tlnp`, TCP handshake and close, UDP | [8.5](08-networking.md#85-dns), [8.6](08-networking.md#86-ports-and-connections) |
+| 21 | HTTP request/response, status codes, plain-text capture; self-signed cert, nginx on 443, `openssl s_client`, encrypted capture; one-page URL walk-through | [8.7](08-networking.md#87-http-and-https), [Appendix B](appendix-b-what-happens-url.md) |
 
 Quick lookup of single commands: [cheatsheet.md](../cheatsheet.md).

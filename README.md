@@ -129,6 +129,14 @@ Warm-up: ⭐ `daemon-reload` remembered but spelt `deamon`; ⭐ `chown :ops /srv
 
 Warm-up (new format: weak point + recent mistakes + older commands): ⭐ `daemon-reload` spelt right; `/27` question all right; `/25` right but 125 usable instead of 126; `find` by name and `tar -czf` not known (now on the weak-points list); `chmod 750` right. Followed a lookup from the VM: `127.0.0.53` (systemd-resolved) → `192.168.207.2` (VMware NAT, also the DNS server from DHCP) → upstream. Watched a TTL count down, queried A / AAAA / MX / CNAME / NS records, and walked root → .com → ns2.google.com with `dig +trace`. `+trace` first timed out because the local forwarders don't answer `. NS`; asking `@8.8.8.8` proved the network was fine. Added a name to `/etc/hosts` and saw that the local stub reads it but an outside DNS server does not. Handbook: [8.5](handbook/08-networking.md#85-dns).
 
+## Day 20 — Ports and TCP connections
+
+Warm-up 3/5: ⭐ `ss -tlnp` right, /25 = 128/126 right, `chmod 750` right; `find` (wrote `/etc/*.conf &2>`) and `tar -czf` still wrong. Reviewed Day 19 DNS by answering questions: forwarder vs recursive resolver vs authoritative, root → .com → authoritative, A vs NS, why `+trace` fails at `. NS`, one server asked per level. Finished the Windows hosts lab (`ssh admin123@ubuntu-lab`). Read `ss -tlnp` (`0.0.0.0` vs `127.0.0.53%lo`), captured a full HTTP connection (handshake → data → close) and a 2-packet UDP DNS query; saw the client's ephemeral port change every time. Handbook: [8.6](handbook/08-networking.md#86-ports-and-connections).
+
+## Day 21 — HTTP and HTTPS
+
+Read a full request/response with `curl -v`, a 404, and the matching `access.log` lines. Captured a password in plain HTTP with `tcpdump -A`. Made a self-signed certificate, served nginx on 443, saw curl refuse it (`SEC_E_UNTRUSTED_ROOT`) and accept it with `-k`; compared my cert with google.com's using `openssl s_client` (subject = issuer → self-signed vs a CA chain). Captured HTTPS: password gone, site name still visible in the ClientHello (SNI). Milestone: one-page "what happens when you type a URL". Handbook: [8.7](handbook/08-networking.md#87-http-and-https), [Appendix B](handbook/appendix-b-what-happens-url.md).
+
 ## Server Setup Handbook
 
 Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md). Every topic from Day 1 on has a chapter; the handbook's "Find by day" table maps each day to its section.
