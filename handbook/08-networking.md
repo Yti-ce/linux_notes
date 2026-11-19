@@ -827,3 +827,143 @@ admin123@admin:~$ sudo tcpdump -i ens33 -n port 53     # other window: dig @8.8.
 | Windows hosts in Notepad | not run as administrator → not saved | admin PowerShell `Add-Content`, then check with `Get-Content -Tail` |
 | didn't know why curl went to 80 | `http://` defaults to 80 | write `:8080` to pick another port |
 | TCP phases: only named the handshake | a connection has 3 phases | handshake `[S] [S.] [.]` → data `[P.]` + `[.]` → close `[F.] [F.] [.]` |
+
+## 8.7 HTTP and HTTPS
+
+*Day 21 (2026-11-19).*
+
+### What curl and nginx say to each other: `curl -v`
+
+```console
+PS C:\Users\HP> curl.exe -v http://ubuntu-lab
+* Host ubuntu-lab:80 was resolved.            ← name → IP (Windows hosts file)
+* Established connection ... from 192.168.207.1 port 61904   ← TCP handshake done
+> GET / HTTP/1.1                ← request line: method, path, version
+> Host: ubuntu-lab              ← which site (one nginx can host many)
+> User-Agent: curl/8.22.0
+> Accept: */*
+>                               ← blank line = end of request headers
+< HTTP/1.1 200 OK               ← status line
+< Server: nginx/1.28.3 (Ubuntu)
+< Content-Type: text/html
+< Content-Length: 615
+<                               ← blank line, then the HTML body
+```
+
+`*` = curl's own notes, `>` = what I sent, `<` = what the server sent back.
+
+| Status | Meaning |
+|---|---|
+| 200 | OK |
+| 301 / 302 | redirect to another URL |
+| 403 | forbidden |
+| 404 | not found (`curl.exe -v http://ubuntu-lab/abc`) |
+| 500 / 502 | server-side error (502: the program behind nginx is down) |
+
+Every request is also in `/var/log/nginx/access.log`; the status code is field `$9`:
+
+```console
+admin123@admin:~$ tail -n 2 /var/log/nginx/access.log
+192.168.207.1 - - [19/Nov/2026:13:26:34 +0000] "GET / HTTP/1.1" 200 615 "-" "curl/8.22.0"
+192.168.207.1 - - [19/Nov/2026:13:33:16 +0000] "GET /abc HTTP/1.1" 404 162 "-" "curl/8.22.0"
+admin123@admin:~$ awk '{print $9}' /var/log/nginx/access.log | sort | uniq -c
+```
+
+URL anatomy: `http://` scheme · `ubuntu-lab` host · (`:80` default port) · `/login` path · `?user=ytice&password=123456` query.
+
+### HTTP is plain text
+
+```console
+admin123@admin:~$ sudo tcpdump -i ens33 -n -A port 80     # -A = print packet contents as text
+# Windows: curl.exe "http://ubuntu-lab/login?user=ytice&password=123456"
+E.....@......P.....x..P...cy..GET /login?user=ytice&password=123456 HTTP/1.1
+Host: ubuntu-lab
+```
+
+The password is readable by anyone who can capture on the path (Wi-Fi, router, ISP). Real logins put it in a POST body, which is just as readable over HTTP.
+
+### HTTPS = HTTP inside TLS
+
+TLS sits between TCP and HTTP and does two jobs: **encrypt** the traffic, and **prove the server's identity** with a certificate (like ssh's host key).
+
+**1. Self-signed certificate + private key**
+
+```console
+admin123@admin:~$ sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout /etc/ssl/private/ubuntu-lab.key -out /etc/ssl/certs/ubuntu-lab.crt -subj "/CN=ubuntu-lab"
+# -x509 self-signed cert · -nodes no password on the key · rsa:2048 new key · CN = name on the cert
+admin123@admin:~$ sudo ls -l /etc/ssl/private/ubuntu-lab.key /etc/ssl/certs/ubuntu-lab.crt
+-rw-r--r-- 1 root root 1115 Nov 19 13:43 /etc/ssl/certs/ubuntu-lab.crt     ← public, sent to every client
+-rw------- 1 root root 1704 Nov 19 13:43 /etc/ssl/private/ubuntu-lab.key   ← the secret; protected by permissions, NOT encrypted (-nodes)
+```
+
+The certificate holds the **public key**; only the server holding the **private key** can complete the handshake. Whoever steals the key can impersonate the server.
+
+**2. nginx site on 443** — `/etc/nginx/sites-available/https-lab`:
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name ubuntu-lab;
+
+    ssl_certificate     /etc/ssl/certs/ubuntu-lab.crt;
+    ssl_certificate_key /etc/ssl/private/ubuntu-lab.key;
+
+    root /var/www/html;
+    index index.html index.nginx-debian.html;
+}
+```
+
+```console
+admin123@admin:~$ sudo ln -s /etc/nginx/sites-available/https-lab /etc/nginx/sites-enabled/
+admin123@admin:~$ sudo nginx -t && sudo systemctl reload nginx
+admin123@admin:~$ sudo ss -tlnp | grep :443
+LISTEN 0  511  0.0.0.0:443  0.0.0.0:*  users:(("nginx",pid=29295,fd=14),...)
+```
+
+**3. Test from Windows**
+
+```console
+PS> curl.exe -v https://ubuntu-lab
+* schannel: SEC_E_UNTRUSTED_ROOT (0x80090325) - 证书链是由不受信任的颁发机构颁发的。
+curl: (60) ...                       ← fails BEFORE any "> GET": no trust, no request
+PS> curl.exe -vk https://ubuntu-lab  ← -k = skip verification (lab only)
+< HTTP/1.1 200 OK
+```
+
+**4. Inspect the certificate: `openssl s_client`**
+
+```console
+admin123@admin:~$ openssl s_client -connect localhost:443 -servername ubuntu-lab < /dev/null
+subject=CN=ubuntu-lab            ← who the cert is for
+issuer=CN=ubuntu-lab             ← who vouches for it: the same → self-signed
+New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
+Server public key is 2048 bit
+Verify return code: 18 (self-signed certificate)
+
+admin123@admin:~$ openssl s_client -connect google.com:443 -servername google.com < /dev/null 2>/dev/null \
+  | grep -E "subject=|issuer=|Verify return"
+subject=CN=*.google.com
+issuer=C=US, O=Google Trust Services, CN=WE2   ← a CA, different from subject
+Verify return code: 0 (ok)
+```
+
+**Chain of trust:** the OS ships trusted root CAs (`/etc/ssl/certs/`, Windows certificate store). WE2 is signed by a root CA → trusted. My cert only points back to itself → untrusted.
+
+**5. Capture it: the password is gone**
+
+```console
+admin123@admin:~$ sudo tcpdump -i ens33 -n -A port 443
+# Windows: curl.exe -k "https://ubuntu-lab/login?user=ytice&password=123456"
+```
+
+| Packets | What |
+|---|---|
+| 1–3 | TCP handshake `[S] [S.] [.]` |
+| 4 | TLS **ClientHello** (448 B): contains `ubuntu-lab` in clear text (**SNI**, the site name) |
+| 6 | server's reply with the certificate (1380 B) |
+| … `[P.]` | encrypted HTTP: GET and 200 OK are in here, all noise |
+| last 3 | TCP close `[F.] [F.] [.]` |
+
+16 packets vs 9 for plain HTTP; the extra ones are the TLS handshake. `password=123456` can't be found; the **domain name still can** (SNI), and so can the IPs and ports.
+
