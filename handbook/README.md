@@ -57,5 +57,6 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 | 19 | DNS lookup chain, TTL, record types, `dig +trace` (and fixing it with `@8.8.8.8`), `/etc/hosts` | [8.5](08-networking.md#85-dns) |
 | 20 | DNS review; Windows hosts → `ssh admin123@ubuntu-lab`; ports, `ss -tlnp`, TCP handshake and close, UDP | [8.5](08-networking.md#85-dns), [8.6](08-networking.md#86-ports-and-connections) |
 | 21 | HTTP request/response, status codes, plain-text capture; self-signed cert, nginx on 443, `openssl s_client`, encrypted capture; one-page URL walk-through | [8.7](08-networking.md#87-http-and-https), [Appendix B](appendix-b-what-happens-url.md) |
+| 22 | Day 21 review; netplan static IP `192.168.207.50`, `netplan try`, host-only NIC `ens37` `192.168.50.10`, two-NIC routing | [Chapter 9](09-network-config.md) |
 
 Quick lookup of single commands: [cheatsheet.md](../cheatsheet.md).
