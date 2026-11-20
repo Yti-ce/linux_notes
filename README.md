@@ -137,6 +137,10 @@ Warm-up 3/5: ⭐ `ss -tlnp` right, /25 = 128/126 right, `chmod 750` right; `find
 
 Read a full request/response with `curl -v`, a 404, and the matching `access.log` lines. Captured a password in plain HTTP with `tcpdump -A`. Made a self-signed certificate, served nginx on 443, saw curl refuse it (`SEC_E_UNTRUSTED_ROOT`) and accept it with `-k`; compared my cert with google.com's using `openssl s_client` (subject = issuer → self-signed vs a CA chain). Captured HTTPS: password gone, site name still visible in the ClientHello (SNI). Milestone: one-page "what happens when you type a URL". Handbook: [8.7](handbook/08-networking.md#87-http-and-https), [Appendix B](handbook/appendix-b-what-happens-url.md).
 
+## Day 22 — Network configuration
+
+Warm-up 3/5: ⭐ `daemon-reload` right, `tar -czf` right for the first time, cron line right; `find -name /*.conf` (extra `/`) and nginx access records looked up with `journalctl` instead of `access.log`. Reviewed Day 21 by filling in the "type a URL" chain (4/6, then fixed), private vs public key, what HTTPS hides. Took a snapshot, set a static IP `192.168.207.50` with netplan (lost ssh once by running `netplan try` over ssh; redid it in the console), updated the Windows hosts entry, then gave the host-only NIC `ens37` `192.168.50.10` and reached the VM from Windows over both networks. Handbook: [Chapter 9](handbook/09-network-config.md).
+
 ## Server Setup Handbook
 
 Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md). Every topic from Day 1 on has a chapter; the handbook's "Find by day" table maps each day to its section.

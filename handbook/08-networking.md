@@ -716,7 +716,7 @@ ping -n 2 ubuntu-lab        # Windows: -n = count (Linux uses -c)
 ssh admin123@ubuntu-lab     # user@name instead of user@IP
 ```
 
-Result: `Pinging ubuntu-lab [192.168.207.130]`, TTL=64 (a Linux reply). ssh asked to trust the host key again because `known_hosts` stores keys **per name**; it also showed the same key was already known as .129/.130, so `yes` was safe. The VM's IP comes from DHCP, so this line must be updated if the IP changes (fixed by a static IP in week 4).
+Result: `Pinging ubuntu-lab [192.168.207.130]`, TTL=64 (a Linux reply). ssh asked to trust the host key again because `known_hosts` stores keys **per name**; it also showed the same key was already known as .129/.130, so `yes` was safe. The VM's IP came from DHCP, so this line had to follow it. Day 22: static `192.168.207.50`, hosts updated (see [9.3](09-network-config.md#93-static-ip-on-ens33)).
 
 ### Mistakes I made (Day 19)
 
