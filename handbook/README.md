@@ -11,7 +11,8 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 | Hypervisor | VMware Workstation, NAT network (VMnet8) |
 | Guest | Ubuntu Server 26.04.1 LTS, 2 vCPU, 4 GB RAM, 30 GB disk |
 | Hostname / user | `admin` / `admin123` |
-| Access | `ssh admin123@<vm-ip>` from Windows PowerShell |
+| Network | `ens33` NAT `192.168.207.50/24` (static, Day 22); `ens37` host-only `192.168.50.10/24` |
+| Access | `ssh admin123@ubuntu-lab` (Windows hosts → .207.50) or `ssh admin123@192.168.50.10` |
 
 ## Contents
 
@@ -28,7 +29,8 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 | [A](appendix-a-troubleshooting.md) | Troubleshooting record: symptom → first command, 5 failure scenarios | Day 14 | ✅ Day 14 |
 | [8](08-networking.md) | Networking basics: TCP/IP and OSI layers, tcpdump, Wireshark, MAC vs IP, TTL; IP and subnets (8.2); routing and NAT, Packet Tracer lab (8.3); DHCP and ARP (8.4); DNS (8.5); ports and connections (8.6); HTTP and HTTPS (8.7) | Day 15–21 | ✅ Day 15–21 |
 | [B](appendix-b-what-happens-url.md) | What happens when you type a URL: DNS → TCP → TLS → HTTP on one page | Day 21 | ✅ Day 21 |
-| 9–12 | SSH hardening, firewall, nginx reverse proxy | Week 3–4 | ⏳ Week 3–4 |
+| [9](09-network-config.md) | Network configuration: netplan static IP, host-only second NIC, routing table | Day 22 | ✅ Day 22 |
+| 10–12 | SSH hardening, firewall, nginx reverse proxy | Week 4 | ⏳ Week 4 |
 
 ## Find by day
 

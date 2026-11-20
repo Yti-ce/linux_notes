@@ -415,6 +415,18 @@ Default ports: ssh 22, DNS 53 (UDP), HTTP 80, HTTPS 443. Server port fixed, clie
 
 Status: 200 OK · 301/302 redirect · 403 forbidden · 404 not found · 500/502 server error. subject = issuer → self-signed. `.key` 600, `.crt` 644.
 
+## Network configuration (Day 22)
+
+| Command | Meaning |
+|---|---|
+| `ip -br addr` / `ip -br link` | one line per interface |
+| `ip route` | `default via` = gateway; `proto dhcp/static/kernel` |
+| `sudo nano /etc/netplan/00-installer-config.yaml` | netplan config (YAML, spaces only) |
+| `sudo netplan try` | apply with 120 s auto-rollback — **run in the VMware console** |
+| `sudo netplan apply` | apply, no rollback |
+
+Static IP needs: address/prefix, `routes: - to: default via:`, `nameservers:`, `dhcp4: false`. Second NIC: address only, **no gateway**. Pick static IPs outside the DHCP range (.128–.254 on VMware NAT).
+
 ## Day 14 quiz and troubleshooting
 
 Quiz 6/20 (closed book). Full record of the 5 failure scenarios: [handbook Appendix A](handbook/appendix-a-troubleshooting.md).
