@@ -199,3 +199,4 @@ Real use: services that listen only on `127.0.0.1` (databases, admin pages) can 
 | thought `id_ed25519` goes to the server | that's the private key | the `.pub` file goes to the server |
 | `grep -ri ... /etc/ssh/sshd_config.d/` → Permission denied | root-only file | `sudo` |
 | "700/600 because the key must not be executable" | `x` is only half of it | the real reason: nobody else may **write** (add their own key) |
+| closed the tunnel, page still loaded, `access.log` unchanged | browser showed a **cached** copy; no request reached nginx | `Ctrl+F5`, or check with `curl` / the log — the browser isn't proof |
