@@ -427,6 +427,35 @@ Status: 200 OK · 301/302 redirect · 403 forbidden · 404 not found · 500/502 
 
 Static IP needs: address/prefix, `routes: - to: default via:`, `nameservers:`, `dhcp4: false`. Second NIC: address only, **no gateway**. Pick static IPs outside the DHCP range (.128–.254 on VMware NAT).
 
+## SSH hardening (Day 23)
+
+| Command | Meaning |
+|---|---|
+| `ssh-keygen -t ed25519` | key pair on the client: `id_ed25519` private (never share), `.pub` public (goes to the server) |
+| `type ~\.ssh\id_ed25519.pub \| ssh host "cat >> ~/.ssh/authorized_keys"` | copy public key from Windows (Linux: `ssh-copy-id host`); `~/.ssh` 700, file 600 |
+| `ssh lab` | alias from `~/.ssh/config` (`Host` / `HostName` / `User` / `IdentityFile`) |
+| `sudo sshd -t` / `sudo sshd -T \| grep -E "passwordauth\|permitroot"` | syntax check / settings in effect |
+| `/etc/ssh/sshd_config.d/00-hardening.conf` | `PasswordAuthentication no`, `PermitRootLogin no`; first value read wins, `00` < `50-cloud-init` |
+| `sudo systemctl restart ssh` | apply (service is `ssh` on Ubuntu) |
+| `ssh -o PubkeyAuthentication=no user@host` | test: should be `Permission denied (publickey)` |
+| `ssh -L 8080:localhost:80 lab` | local port forward: my 8080 → server's localhost:80 |
+
+Keep one session open while changing sshd; test key login before turning passwords off.
+
+## Firewall (Day 24)
+
+| Command | Meaning |
+|---|---|
+| `sudo ufw status verbose` | on/off, defaults, rules |
+| `sudo ufw default deny incoming` + `default allow outgoing` | default policy |
+| `sudo ufw allow 22/tcp` → then `sudo ufw enable` | **22 first**, or ssh drops |
+| `sudo ufw delete allow 80/tcp` | remove a rule |
+| `nmap -p 22,80,443,8080 192.168.207.50` | scan from Windows: `open` / `closed` (RST) / `filtered` (dropped) |
+| `sudo iptables -L INPUT -n` | real rules; `policy DROP` = no match → discard |
+| `sudo journalctl -k \| grep "UFW BLOCK"` | dropped packets: `SRC`, `DPT`, `SYN` |
+
+Site down? service (`systemctl status`) → port (`ss -tlnp`) → inside (`curl -I http://localhost`) → firewall (`ufw status`, `UFW BLOCK` log).
+
 ## Day 14 quiz and troubleshooting
 
 Quiz 6/20 (closed book). Full record of the 5 failure scenarios: [handbook Appendix A](handbook/appendix-a-troubleshooting.md).
