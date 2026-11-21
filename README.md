@@ -141,6 +141,10 @@ Read a full request/response with `curl -v`, a 404, and the matching `access.log
 
 Warm-up 3/5: ⭐ `daemon-reload` right, `tar -czf` right for the first time, cron line right; `find -name /*.conf` (extra `/`) and nginx access records looked up with `journalctl` instead of `access.log`. Reviewed Day 21 by filling in the "type a URL" chain (4/6, then fixed), private vs public key, what HTTPS hides. Took a snapshot, set a static IP `192.168.207.50` with netplan (lost ssh once by running `netplan try` over ssh; redid it in the console), updated the Windows hosts entry, then gave the host-only NIC `ens37` `192.168.50.10` and reached the VM from Windows over both networks. Handbook: [Chapter 9](handbook/09-network-config.md).
 
+## Day 23 — SSH hardening
+
+Warm-up 1.5/5: ⭐ `ss -tlnp | grep :22` right; `find -name *.conf` without quotes; `scp`, `sed 's///g'` and finding a PID with `ps aux | grep` not known (these three now go into every warm-up). Made an `ed25519` key on Windows, put the public key into `authorized_keys` (700/600 — nobody else may add a key), added a `ssh lab` alias, then turned off password and root login with my own `sshd_config.d/00-hardening.conf` (cloud-init's `50-` file said `PasswordAuthentication yes` and would have won over the main file). Verified from a new window: key in, password and root refused with `Permission denied (publickey)`. Reached nginx through `ssh -L 8080:localhost:80 lab`; access.log showed `127.0.0.1` (loopback). Handbook: [Chapter 10](handbook/10-ssh-hardening.md).
+
 ## Server Setup Handbook
 
 Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md). Every topic from Day 1 on has a chapter; the handbook's "Find by day" table maps each day to its section.

@@ -30,7 +30,8 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 | [8](08-networking.md) | Networking basics: TCP/IP and OSI layers, tcpdump, Wireshark, MAC vs IP, TTL; IP and subnets (8.2); routing and NAT, Packet Tracer lab (8.3); DHCP and ARP (8.4); DNS (8.5); ports and connections (8.6); HTTP and HTTPS (8.7) | Day 15–21 | ✅ Day 15–21 |
 | [B](appendix-b-what-happens-url.md) | What happens when you type a URL: DNS → TCP → TLS → HTTP on one page | Day 21 | ✅ Day 21 |
 | [9](09-network-config.md) | Network configuration: netplan static IP, host-only second NIC, routing table | Day 22 | ✅ Day 22 |
-| 10–12 | SSH hardening, firewall, nginx reverse proxy | Week 4 | ⏳ Week 4 |
+| [10](10-ssh-hardening.md) | SSH hardening: key login, `~/.ssh/config`, no password / root login, local port forwarding | Day 23 | ✅ Day 23 |
+| 11–12 | Firewall, nginx reverse proxy | Week 4 | ⏳ Week 4 |
 
 ## Find by day
 
@@ -60,3 +61,4 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 | 22 | Day 21 review; netplan static IP `192.168.207.50`, `netplan try`, host-only NIC `ens37` `192.168.50.10`, two-NIC routing | [Chapter 9](09-network-config.md) |
 
 Quick lookup of single commands: [cheatsheet.md](../cheatsheet.md).
+| 23 | SSH keys (`ed25519`, `authorized_keys`, 700/600), `ssh lab` alias, `00-hardening.conf` (no passwords, no root), local port forward to nginx | [Chapter 10](10-ssh-hardening.md) |
