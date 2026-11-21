@@ -442,6 +442,20 @@ Static IP needs: address/prefix, `routes: - to: default via:`, `nameservers:`, `
 
 Keep one session open while changing sshd; test key login before turning passwords off.
 
+## Firewall (Day 24)
+
+| Command | Meaning |
+|---|---|
+| `sudo ufw status verbose` | on/off, defaults, rules |
+| `sudo ufw default deny incoming` + `default allow outgoing` | default policy |
+| `sudo ufw allow 22/tcp` → then `sudo ufw enable` | **22 first**, or ssh drops |
+| `sudo ufw delete allow 80/tcp` | remove a rule |
+| `nmap -p 22,80,443,8080 192.168.207.50` | scan from Windows: `open` / `closed` (RST) / `filtered` (dropped) |
+| `sudo iptables -L INPUT -n` | real rules; `policy DROP` = no match → discard |
+| `sudo journalctl -k \| grep "UFW BLOCK"` | dropped packets: `SRC`, `DPT`, `SYN` |
+
+Site down? service (`systemctl status`) → port (`ss -tlnp`) → inside (`curl -I http://localhost`) → firewall (`ufw status`, `UFW BLOCK` log).
+
 ## Day 14 quiz and troubleshooting
 
 Quiz 6/20 (closed book). Full record of the 5 failure scenarios: [handbook Appendix A](handbook/appendix-a-troubleshooting.md).
