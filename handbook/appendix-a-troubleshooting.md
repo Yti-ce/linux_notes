@@ -1,6 +1,6 @@
 # Appendix A — Troubleshooting record
 
-Failures I caused on purpose and then fixed: five Linux ones on **Day 14** (2026-11-17, A.1–A.5) and four network ones on **Day 25** (2026-11-23, A.7–A.10). The chapters are organised by *what I learned*; this appendix is organised by *what broke*, so it is the place to start when something is wrong.
+Failures I caused on purpose and then fixed: five Linux ones on **Day 14** (2026-11-17, A.1–A.5) and four network ones on **Day 25** (2026-11-23, A.7–A.10). **Part 2** (Day 26) is the bottom-up network checklist (A.12) and a wrong-gateway drill (A.13). The chapters are organised by *what I learned*; this appendix is organised by *what broke*, so it is the place to start when something is wrong.
 
 ## A.0 Symptom → first command
 
@@ -15,6 +15,7 @@ Failures I caused on purpose and then fixed: five Linux ones on **Day 14** (2026
 | a NIC's IP doesn't answer, other NICs fine | `ip -br addr` | IP wrong → `/etc/netplan/*.yaml` → `sudo netplan try` ([A.7](#a7-second-nic-unreachable-wrong-ip-in-netplan)) |
 | `Connection refused` | `sudo ss -tlnp \| grep ':<port> '` | nobody listening → `systemctl status` → `journalctl -u` / `sudo sshd -t` ([A.8](#a8-ssh-connection-refused-typo-in-sshd-config)) |
 | timeout, service fine inside | `sudo ufw status numbered` | rule order, first match wins ([A.9](#a9-website-times-out-from-one-machine-ufw-rule-order)) |
+| can't get out (apt, ping 8.8.8.8) | `ip route` → `ping -c 3 <gateway>` | `Destination Host Unreachable` from my own IP → wrong gateway in netplan ([A.13](#a13-apt-update-fails-wrong-gateway-in-netplan)); full flow in [A.12](#a12-bottom-up-checklist) |
 | IP works, name doesn't | `ping -n 1 <name>` (shows the IP it resolved to) | hosts file, then DNS server ([A.10](#a10-name-doesnt-work-ip-does-wrong-hosts-entry)) |
 
 General method (from [6.2](06-logs.md#62-method)): **reproduce → read status/logs → find the exact cause → fix one thing → verify, including that nothing else broke.**
@@ -325,3 +326,74 @@ Windows looks a name up in: **DNS cache → hosts file → DNS server.** Wrong a
 | `ss -tlnp \| grep 22` | no `sudo` → no process column; `22` also matches `2222` | `sudo ss -tlnp \| grep ':22 '` |
 | `curl.exe -m http://...` | `-m` needs seconds | `curl.exe -m 5 http://...` |
 | `ufw status nembered` | typo | `numbered` |
+
+---
+
+# Part 2 — Network troubleshooting flow (Day 26, 2026-11-23)
+
+## A.12 Bottom-up checklist
+
+**Why bottom-up:** upper layers depend on lower ones. No IP → no gateway → no DNS → no website, so an error at the top can be caused at the bottom. Each step checks **one** thing; the **first step that fails** is where to look.
+
+> Interview line: *"I go bottom-up so each check rules out one layer, and the first failure tells me where to look."*
+
+| # | Question | Command | Good result (my VM) | If it fails |
+|---|---|---|---|---|
+| 1 | Does the NIC have an IP? | `ip -br addr` | `ens33 UP 192.168.207.50/24` | link `DOWN` / wrong or no IP → netplan ([A.7](#a7-second-nic-unreachable-wrong-ip-in-netplan)) |
+| 2 | Is a gateway **configured**, and does it **answer**? | `ip route` then `ping -c 3 192.168.207.2` | `default via 192.168.207.2 dev ens33`, 0% loss | no `default` line, or the gateway doesn't answer ([A.13](#a13-apt-update-fails-wrong-gateway-in-netplan)) |
+| 3 | Can I reach an outside **IP**? | `ping -c 3 8.8.8.8` | 0% loss | path/routing problem. An IP on purpose: this rules DNS out |
+| 4 | Do **names** resolve? | `dig google.com +short`, then `dig @8.8.8.8 google.com +short`; which server: `resolvectl status` | IPs printed; `DNS Servers: 192.168.207.2` | normal fails but `@8.8.8.8` works → **my configured DNS server** is broken/wrong → netplan `nameservers` |
+| 5 | Does the **service** answer? | client: `curl.exe -I http://192.168.207.50`; server: `sudo ss -tlnp \| grep ':80 '`, `systemctl status nginx` | `HTTP/1.1 200 OK` | `refused` → nobody listening ([A.8](#a8-ssh-connection-refused-typo-in-sshd-config)); timeout → firewall ([A.9](#a9-website-times-out-from-one-machine-ufw-rule-order)) |
+
+"Step 4" here is a step in my list, **not OSI layer 4**: DNS is an application-layer (L7) protocol.
+
+### Read the error word first
+
+| Error | Meaning | Usual cause |
+|---|---|---|
+| `connect: Network is unreachable` | my machine has no route at all; nothing is sent | no `default` route |
+| `From <my own IP> ... Destination Host Unreachable` | I know where to send it, but nobody on my subnet answers ARP for the target/gateway; nothing leaves the machine | gateway IP wrong, host off |
+| no replies, `100% packet loss` (timeout) | packets left, nothing came back | firewall drops, broken path |
+| `Connection refused` | packet arrived, nobody listening on that port | service down |
+| `Temporary failure in name resolution` | the name couldn't be turned into an IP | DNS |
+| `Permission denied` | not a network problem at all | forgot `sudo` |
+
+### Check before applying, per tool
+
+| Tool | Check | Apply |
+|---|---|---|
+| nginx | `sudo nginx -t` | `sudo systemctl reload nginx` |
+| sshd | `sudo sshd -t` | `sudo systemctl restart ssh` |
+| netplan (a tool, **not a service**) | `sudo netplan try` (auto-reverts after 120 s unless Enter) | Enter to accept |
+
+## A.13 apt update fails (wrong gateway in netplan)
+
+**Break:** `sudo sed -i 's/via: 192\.168\.207\.2$/via: 192.168.207.99/' /etc/netplan/00-installer-config.yaml && sudo netplan apply` (only the route changes, so ssh over ens33 survives; `.99` is an unused address on VMnet8).
+
+**Symptom:** "`sudo apt update` suddenly doesn't work."
+
+**Diagnose (logic chain):**
+
+| Question | Command | Saw | Rules out / tells me |
+|---|---|---|---|
+| Is a gateway configured? | `ip route` | `default via 192.168.207.99` | a default route exists, but `.99` is not what VMware NAT uses |
+| Does that gateway exist? | `ping -c 3 192.168.207.99` | `From 192.168.207.50 ... Destination Host Unreachable` ×3 | my own machine reports it: ARP "who has .99?" got no answer → **no such host** on the subnet |
+| Who configured it? | `find /etc -name "*.yaml" 2>/dev/null` → `sudo cat /etc/netplan/00-installer-config.yaml` | `routes: - to: default  via: 192.168.207.99` | the cause, in a file |
+
+I spotted `.99` at once only because I remembered `.2`. On someone else's machine I won't know the right answer, so the ping is the **evidence** that the gateway is wrong.
+
+**Fix and verify:** `sudo nano /etc/netplan/00-installer-config.yaml` → `via: 192.168.207.2` → `sudo netplan try` → Enter → bottom-up again: `ip route` (`via 192.168.207.2`) → `ping -c 3 192.168.207.2` → `ping -c 3 8.8.8.8` → back to the **original symptom**: `sudo apt update` → `Hit:` / `Get:` lines, `Fetched 1,079 kB in 2s`.
+
+DNS (`192.168.207.2`) is on my own subnet, so with a wrong gateway names still resolve; only traffic that has to leave the subnet fails.
+
+## A.14 Mistakes I made (Day 26)
+
+| Typed | Problem | Fix |
+|---|---|---|
+| `find /etc ".conf" 2>/dev/null` (warm-up, question asked for `.yaml`) | no `-name`, so find treats `".conf"` as another path; no `*`; didn't read the question | `find /etc -name "*.yaml" 2>/dev/null` |
+| `find /etc -name "*.netplan"` | `-name` matches the **file name**; `netplan` is the directory, the files end in `.yaml` | `find /etc -name "*.yaml"` or `ls /etc/netplan/` |
+| step 3 = `resolvectl status` | that's DNS (step 4); step 3 tests an outside IP | `ping -c 3 8.8.8.8` |
+| step 2 = only `ip route` | shows the gateway is configured, not that it answers | also `ping -c 3 <gateway>` |
+| only `dig @8.8.8.8 ...` | no comparison | `dig name` first, then `dig @8.8.8.8 name` |
+| `ping -c 8.8.8.8` | `-c` needs a count | `ping -c 3 8.8.8.8` |
+| `apt update` | `Permission denied (13)`: apt writes to root-owned dirs | `sudo apt update` |
