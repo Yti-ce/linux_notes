@@ -81,3 +81,19 @@ admin123   76790  0.0  0.0   6716  3052 pts/0    S+   06:30   0:00 grep --color=
 ```
 
 `top` shows the busiest processes, but it only fits a screenful. `ps aux | grep <name>` is the precise way to find a PID and to verify a process is gone.
+
+## 3.5 Commands
+
+| Command | Does |
+|---|---|
+| `ps aux \| grep <name>` | find a process and its PID (ignore the `grep` line) |
+| `pgrep <name>` / `pgrep -a <name>` | just the PID(s) / PID + command line |
+| `top` (`q` to quit) | live view, busiest first |
+| `kill <PID>` → `kill -9 <PID>` | TERM first, KILL only if it stays |
+
+## 3.6 Mistakes I made
+
+| Typed / thought | Problem | Fix |
+|---|---|---|
+| Day 23: didn't know how to find a PID | — | `ps aux \| grep nginx` or `pgrep nginx` |
+| Day 25: which sshd line is the service? | `[listener]` = the service on port 22; `sshd-session` = one per logged-in window | restarting ssh kills only the listener, open windows stay ([A.8](appendix-a-troubleshooting.md#a8-ssh-connection-refused-typo-in-sshd-config)) |
