@@ -149,6 +149,14 @@ Warm-up 1.5/5: ⭐ `ss -tlnp | grep :22` right; `find -name *.conf` without quot
 
 Found an extra open door first: nginx's Day 20 test site on `0.0.0.0:8080` (DNS on 53 is loopback-only). Installed nmap on Windows (first ran `winget` inside the VM, then typed `Namp`) and scanned: 22/80/443/8080 all `open`. Set `default deny incoming`, allowed 22 before `ufw enable`, then 80 and 443; rescan showed 8080 `filtered` (I guessed `closed` — ufw drops silently, no RST). Read the iptables rules behind ufw: `Chain INPUT (policy DROP)`, `ACCEPT ... dpt:22` in `ufw-user-input`. Deleted the 80 rule on purpose and troubleshot inside-out: nginx running → `ss -tlnp` listening → `curl localhost` 200 → ufw has no 80; proof in `journalctl -k` `[UFW BLOCK] SRC=192.168.207.1 DPT=80 SYN` (retransmitted 3×). Re-allowed 80, page back. Handbook: [Chapter 11](handbook/11-firewall.md).
 
+## Day 25 — Week 4 review: troubleshooting drills
+
+Warm-up 2/5 + a half: `daemon-reload` right for the 3rd time in a row (dropped from ⭐); `sed` without `g`; `scp ~/backup.tar.gz:lab .` (host:path the wrong way round, now `scp lab:~/backup.tar.gz .`); `ps aux | grep sshd` right; `tail -n 30` right but `~/var/log/...` instead of `/var/log/...`. ⭐ list now: `chown :group`, `ss -tlnp`, `sed s///g`, `scp host:path`, `find -name "*.conf"`, `ip -br addr`.
+
+Four failures broken by someone else, fixed from the symptom only: wrong IP on the host-only NIC (`ip -br addr`), an sshd typo that gave `Connection refused` (`journalctl -u ssh` → file and line; why open sessions survive a restart), a ufw DENY above an ALLOW (first match wins; ufw keeps one rule per condition), and a wrong Windows hosts entry (IP works, name doesn't → `ping` shows the resolved IP). Why the first ping after a fix times out: ARP. Handbook: [Appendix A.7–A.11](handbook/appendix-a-troubleshooting.md#a7-second-nic-unreachable-wrong-ip-in-netplan); chapters 1, 3, 4 got the Commands / Mistakes sections the later chapters have.
+
+**Week review (Days 19–25).** Most useful: real network work (DNS, static IP, SSH, firewall, breaking and fixing) rather than only commands, though the commands are the base. Still weak: the troubleshooting path isn't automatic yet and many commands aren't fluent, so from now on every day includes one real failure scenario. Pace unchanged.
+
 ## Server Setup Handbook
 
 Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md). Every topic from Day 1 on has a chapter; the handbook's "Find by day" table maps each day to its section.

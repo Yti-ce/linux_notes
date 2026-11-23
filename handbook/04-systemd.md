@@ -158,3 +158,21 @@ Wed Nov 11 07:34:56 AM UTC 2026
 ✅ Both services came back on their own after the reboot.
 
 > Don't trust "the command didn't print an error". Configure, then **verify**: here, by actually rebooting.
+
+## 4.6 Commands
+
+| Command | Does |
+|---|---|
+| `sudo systemctl start\|stop\|restart <svc>` | run / stop now (action **before** the name) |
+| `sudo systemctl enable\|disable <svc>` | start at boot or not (`enable`, not `enabled`) |
+| `systemctl status <svc>` | state, main PID, last log lines |
+| `sudo systemctl daemon-reload` | after creating / editing a `.service` file, then `restart` |
+| `sudo journalctl -u <svc> -n 20 --no-pager` | the service's recent log |
+
+## 4.7 Mistakes I made (Day 14 quiz)
+
+| Typed | Problem | Fix |
+|---|---|---|
+| `systemctl nginx enabled` | order and word | `sudo systemctl enable nginx` |
+| `nginx -t` after editing a unit file | `nginx -t` checks nginx's own config | `sudo systemctl daemon-reload` |
+| `deamon-reload` | spelling | **dae**mon |

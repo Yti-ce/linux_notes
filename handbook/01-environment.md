@@ -103,3 +103,15 @@ admin123@admin:~$ sudo chmod 755 /usr/local/bin/timestamp.sh   # fixed
 ```
 
 Not sure where you are? `pwd`.
+
+`~` is a shortcut for your **home** directory, so `~/var/log/nginx/access.log` means `/home/admin123/var/log/...` (doesn't exist). System files always start with `/`: `tail -n 30 /var/log/nginx/access.log` (Day 25 warm-up mistake).
+
+## 1.8 Commands
+
+| Command | Does |
+|---|---|
+| `ssh admin123@192.168.207.50` / `ssh lab` | log in from Windows (alias: [10.3](10-ssh-hardening.md#103-client-alias-sshconfig)) |
+| `hostname` / `sudo hostnamectl set-hostname <name>` | show / set the hostname |
+| `sudo apt update` → `sudo apt install <pkg>` / `sudo apt remove <pkg>` | refresh the package list, then install / remove |
+| `ip -br addr` | one line per NIC: name / state / IP |
+| `pwd` | where am I |

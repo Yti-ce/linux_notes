@@ -2,7 +2,7 @@
 
 Built from hands-on practice on Ubuntu Server 26.04.1. Updated as the plan goes on.
 
-Items marked ⚠️ are ones I got wrong or had to look up in the Day 7 quiz. ⭐ = top weak spots from the Day 14 quiz (6/20): practise them every day. Permissions explained in depth (Chinese): [permissions-guide.md](permissions-guide.md). Step-by-step setup by topic: [handbook/](handbook/README.md).
+Items marked ⚠️ are ones I got wrong or had to look up in the Day 7 quiz. ⭐ = top weak spots (Day 14 quiz, updated Day 25): practise them every day. Permissions explained in depth (Chinese): [permissions-guide.md](permissions-guide.md). Step-by-step setup by topic: [handbook/](handbook/README.md).
 
 ## Filesystem hierarchy (FHS)
 
@@ -237,7 +237,7 @@ Why still learn vim: `vi`/`vim` exists on almost every server and minimal image;
 | `systemctl status svc` | state; `Active:` = running now, `enabled` = starts at boot |
 | `sudo systemctl start / stop / restart svc` | now |
 | `sudo systemctl enable / disable svc` | at boot (independent of start/stop). ⚠️ order is **verb, then service**; `enable` not `enabled` |
-| ⭐ `sudo systemctl daemon-reload` | after creating/editing a **unit (.service) file**, then `restart`. Not `nginx -t` (that tests nginx's own config) |
+| `sudo systemctl daemon-reload` | after creating/editing a **unit (.service) file**, then `restart`. Not `nginx -t` (that tests nginx's own config) |
 | `sudo reboot` | restart the VM; the DHCP IP may change afterwards |
 | `curl http://localhost` | fetch a web page from the command line |
 
@@ -295,7 +295,7 @@ Unit file skeleton: `[Unit] Description=` · `[Service] ExecStart=/absolute/path
 | `awk '{print $1}' file` | print field 1 of each line (fields split on spaces) |
 | `sort \| uniq -c` | count identical lines (sort first!) |
 | `sort -rn \| head -n 3` | biggest numbers first, top 3 |
-| `sed 's/old/new/'` | replace text in the output |
+| ⭐ `sed 's/old/new/g' file` | replace **every** match in the output (no `g` = only the first per line) |
 
 nginx access log: `$1` = IP, `$9` = status. Top IP: `awk '{print $1}' access.log | sort | uniq -c | sort -rn | head -n 3`
 
@@ -323,7 +323,7 @@ nginx access log: `$1` = IP, `$9` = status. Top IP: `awk '{print $1}' access.log
 | `sudo tcpdump -i ens33 -n icmp` | print ping packets on `ens33` live (`Ctrl+C` to stop) |
 | `sudo tcpdump -i ens33 -n icmp -c 8 -w ~/ping.pcap` | capture 8 packets into a file for Wireshark |
 | `ping -c 4 8.8.8.8` | send 4 pings, then stop |
-| `scp admin123@<vm-ip>:~/ping.pcap $HOME\Desktop\` | **on Windows**: copy a file from the VM (side with `user@host:` = remote) |
+| ⭐ `scp lab:~/backup.tar.gz .` / `scp admin123@<vm-ip>:~/ping.pcap $HOME\Desktop\` | **on Windows**: copy a file from the VM (side with `user@host:` = remote) |
 | `ip route` | routing table; `default via` = gateway |
 | `ip neigh` | ARP cache: neighbours' IP → MAC |
 
@@ -385,7 +385,7 @@ DORA: Discover (broadcast) → Offer → Request (broadcast) → Ack. `00:50:56`
 | `cat /etc/resolv.conf` | `nameserver 127.0.0.53` = local systemd-resolved (do not edit) |
 | `getent hosts <name>` | resolve like programs do: `/etc/hosts` first, then DNS |
 | `sudo nano /etc/hosts` | add `IP   name` for a local-only name |
-| `find /etc -name "*.conf" 2>/dev/null` | find files by name, drop permission errors |
+| ⭐ `find /etc -name "*.conf" 2>/dev/null` | find files by name (path, then `-name`, pattern in quotes), drop permission errors |
 | `tar -czf x.tar.gz dir` / `tar -xzf x.tar.gz` | pack + gzip / unpack (`c` create, `x` extract, `z` gzip, `f` file) |
 
 Forwarder passes the question up; recursive resolver walks root → TLD → authoritative; authoritative holds the original records. TTL = seconds an answer may be cached. MX: lower number first. Trailing `.` = root.
@@ -419,7 +419,7 @@ Status: 200 OK · 301/302 redirect · 403 forbidden · 404 not found · 500/502 
 
 | Command | Meaning |
 |---|---|
-| `ip -br addr` / `ip -br link` | one line per interface |
+| ⭐ `ip -br addr` / `ip -br link` | one line per interface: name / state / IP. First check for any NIC or IP problem |
 | `ip route` | `default via` = gateway; `proto dhcp/static/kernel` |
 | `sudo nano /etc/netplan/00-installer-config.yaml` | netplan config (YAML, spaces only) |
 | `sudo netplan try` | apply with 120 s auto-rollback — **run in the VMware console** |
