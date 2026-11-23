@@ -975,3 +975,71 @@ admin123@admin:~$ sudo tcpdump -i ens33 -n -A port 443
 | private key "is encrypted, so you can't see it" | `-nodes` = **not** encrypted | it's protected only by permissions `600` |
 | skipped the "what does this mean" questions, just pasted output | the explanation is what interviews ask | answer in one sentence first, then paste |
 | URL walk-through: TCP → TLS → HTTP → FIN | missed DNS and routing/ARP before TCP; called the close "three-way handshake" | see [Appendix B](appendix-b-what-happens-url.md); the close is FIN/ACK ("four-way") |
+
+## 8.8 VLANs and trunks
+
+*Day 25 (2026-11-23), Packet Tracer.* File: [`labs/day25-vlan.pkt`](labs/day25-vlan.pkt).
+
+**A VLAN splits one physical switch into several logical switches.** Broadcasts (ARP "who has…?") stay inside their VLAN, so different VLANs can't talk at layer 2, even with IPs in the same subnet. Why: fewer broadcasts and separation (sales vs HR vs guests).
+
+| Port type | Connects | VLANs | Tag |
+|---|---|---|---|
+| **access** | a PC | exactly 1 | none |
+| **trunk** | another switch | many | **802.1Q** tag with the VLAN ID on each frame |
+
+### Step 1: one switch, everyone in VLAN 1
+
+Switch0 (2960), PC0–PC3 on Fa0/1–Fa0/4, all `192.168.1.1–.4 /24`. `ping 192.168.1.3` from PC0: 4/4. Every port starts in the default **VLAN 1**.
+
+### Step 2: two VLANs, same IPs
+
+```
+Switch> enable
+Switch# configure terminal
+Switch(config)# vlan 10
+Switch(config-vlan)# name SALES
+Switch(config-vlan)# vlan 20
+Switch(config-vlan)# name HR
+Switch(config-vlan)# interface range fa0/1 - 2
+Switch(config-if-range)# switchport mode access
+Switch(config-if-range)# switchport access vlan 10
+Switch(config-if-range)# interface range fa0/3 - 4
+Switch(config-if-range)# switchport mode access
+Switch(config-if-range)# switchport access vlan 20
+Switch(config-if-range)# end
+Switch# show vlan brief
+10   SALES                            active    Fa0/1, Fa0/2
+20   HR                               active    Fa0/3, Fa0/4
+```
+
+| From PC0 (VLAN 10) | Result |
+|---|---|
+| `ping 192.168.1.2` (PC1, VLAN 10) | 4/4 |
+| `ping 192.168.1.3` (PC2, VLAN 20) | timed out |
+
+Why, with the same subnet: PC0's ARP broadcast for `.3` only reaches VLAN 10 ports. Nobody answers, no MAC, no ping. **A VLAN is the edge of a broadcast domain.**
+
+### Step 3: second switch, trunk between them
+
+Switch1 (2960) with the same VLANs: PC4 `192.168.1.5` on Fa0/1 (VLAN 10), PC5 `192.168.1.6` on Fa0/2 (VLAN 20). Cross-over cable Switch0 Gi0/1 ↔ Switch1 Gi0/1.
+
+Without a trunk the link is a plain access port in **VLAN 1**: only VLAN 1 frames cross, so PC0 → PC4 fails. On **both** switches:
+
+```
+Switch(config)# interface gi0/1
+Switch(config-if)# switchport mode trunk
+Switch# show interfaces trunk          ← Gi0/1 trunking, 802.1q, Vlans allowed 1-1005
+```
+
+| From PC0 (VLAN 10) | Result |
+|---|---|
+| `ping 192.168.1.5` (PC4, VLAN 10, other switch) | 4/4 |
+| `ping 192.168.1.6` (PC5, VLAN 20, other switch) | timed out |
+
+One cable carries both VLANs and they stay separate. To let VLAN 10 and 20 talk you need a **layer 3** device (router or L3 switch): inter-VLAN routing, not covered yet.
+
+### Interview version
+
+1. A VLAN splits a switch into separate broadcast domains; different VLANs don't talk at layer 2.
+2. Access port = one VLAN, for end devices. Trunk port = many VLANs between switches, frames tagged with 802.1Q.
+3. Traffic between VLANs needs a router or layer-3 switch.

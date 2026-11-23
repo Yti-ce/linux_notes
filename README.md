@@ -155,6 +155,8 @@ Warm-up 2/5 + a half: `daemon-reload` right for the 3rd time in a row (dropped f
 
 Four failures broken by someone else, fixed from the symptom only: wrong IP on the host-only NIC (`ip -br addr`), an sshd typo that gave `Connection refused` (`journalctl -u ssh` → file and line; why open sessions survive a restart), a ufw DENY above an ALLOW (first match wins; ufw keeps one rule per condition), and a wrong Windows hosts entry (IP works, name doesn't → `ping` shows the resolved IP). Why the first ping after a fix times out: ARP. Handbook: [Appendix A.7–A.11](handbook/appendix-a-troubleshooting.md#a7-second-nic-unreachable-wrong-ip-in-netplan); chapters 1, 3, 4 got the Commands / Mistakes sections the later chapters have.
 
+VLANs in Packet Tracer: four PCs in one subnet, split into VLAN 10 and 20 → same subnet but no ping across (the ARP broadcast stays inside its VLAN). Added a second switch: without a trunk only VLAN 1 crosses the link; with `switchport mode trunk` (802.1Q tags) VLAN 10 reaches the other switch and VLAN 20 stays separate. Handbook: [8.8](handbook/08-networking.md#88-vlans-and-trunks).
+
 **Week review (Days 19–25).** Most useful: real network work (DNS, static IP, SSH, firewall, breaking and fixing) rather than only commands, though the commands are the base. Still weak: the troubleshooting path isn't automatic yet and many commands aren't fluent, so from now on every day includes one real failure scenario. Pace unchanged.
 
 ## Server Setup Handbook
