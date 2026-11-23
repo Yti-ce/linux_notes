@@ -27,7 +27,7 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 | [6](06-logs.md) | Logs and troubleshooting: `journalctl`, 3 failures on purpose, log analysis | Day 11–12 | ✅ Day 11–12 |
 | [7](07-cron.md) | Scheduled jobs: `crontab`, time fields, PATH and `%` pitfalls | Day 13 | ✅ Day 13 |
 | [A](appendix-a-troubleshooting.md) | Troubleshooting record: symptom → first command; 5 Linux failures (A.1–A.5), 4 network failures (A.7–A.10) | Day 14, 25 | ✅ Day 14, 25 |
-| [8](08-networking.md) | Networking basics: TCP/IP and OSI layers, tcpdump, Wireshark, MAC vs IP, TTL; IP and subnets (8.2); routing and NAT, Packet Tracer lab (8.3); DHCP and ARP (8.4); DNS (8.5); ports and connections (8.6); HTTP and HTTPS (8.7) | Day 15–21 | ✅ Day 15–21 |
+| [8](08-networking.md) | Networking basics: TCP/IP and OSI layers, tcpdump, Wireshark, MAC vs IP, TTL; IP and subnets (8.2); routing and NAT, Packet Tracer lab (8.3); DHCP and ARP (8.4); DNS (8.5); ports and connections (8.6); HTTP and HTTPS (8.7); VLANs and trunks (8.8) | Day 15–21, 25 | ✅ Day 15–21, 25 |
 | [B](appendix-b-what-happens-url.md) | What happens when you type a URL: DNS → TCP → TLS → HTTP on one page | Day 21 | ✅ Day 21 |
 | [9](09-network-config.md) | Network configuration: netplan static IP, host-only second NIC, routing table | Day 22 | ✅ Day 22 |
 | [10](10-ssh-hardening.md) | SSH hardening: key login, `~/.ssh/config`, no password / root login, local port forwarding | Day 23 | ✅ Day 23 |
@@ -63,6 +63,6 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 
 | 23 | SSH keys (`ed25519`, `authorized_keys`, 700/600), `ssh lab` alias, `00-hardening.conf` (no passwords, no root), local port forward to nginx | [Chapter 10](10-ssh-hardening.md) |
 | 24 | ufw default deny + allow 22/80/443, nmap `open`/`closed`/`filtered`, `iptables -L` (policy DROP, `dpt`), break 80 → inside-out troubleshooting → `[UFW BLOCK]` log | [Chapter 11](11-firewall.md) |
-| 25 | Week 4 review: 4 drills broken by someone else — wrong IP in netplan, sshd typo (`Connection refused`), ufw rule order (first match wins), wrong Windows hosts entry | [A.7–A.10](appendix-a-troubleshooting.md#a7-second-nic-unreachable-wrong-ip-in-netplan) |
+| 25 | Week 4 review: 4 drills broken by someone else — wrong IP in netplan, sshd typo (`Connection refused`), ufw rule order (first match wins), wrong Windows hosts entry; VLAN 10/20 and a trunk in Packet Tracer | [A.7–A.10](appendix-a-troubleshooting.md#a7-second-nic-unreachable-wrong-ip-in-netplan), [8.8](08-networking.md#88-vlans-and-trunks) |
 
 Quick lookup of single commands: [cheatsheet.md](../cheatsheet.md).
