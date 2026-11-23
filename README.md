@@ -159,6 +159,12 @@ VLANs in Packet Tracer: four PCs in one subnet, split into VLAN 10 and 20 → sa
 
 **Week review (Days 19–25).** Most useful: real network work (DNS, static IP, SSH, firewall, breaking and fixing) rather than only commands, though the commands are the base. Still weak: the troubleshooting path isn't automatic yet and many commands aren't fluent, so from now on every day includes one real failure scenario. Pace unchanged.
 
+## Day 26 — Network troubleshooting method (bottom-up)
+
+Warm-up 4/5: `sed 's/http/https/g'` with the `g` this time, `scp lab:/var/log/nginx/access.log .` right way round, `ps awx | grep sshd` works (standard: `ps aux`), `ip -br addr` right; `find /etc ".conf"` wrong again (no `-name`, and the question asked for `*.yaml`).
+
+Bottom-up checklist: `ip -br addr` → `ip route` + ping the gateway → `ping 8.8.8.8` (an IP, so DNS is ruled out) → `dig name` vs `dig @8.8.8.8 name` (`resolvectl status` shows which DNS server) → `curl` / `ss -tlnp`. Error words tell the layer: `Network is unreachable` (no route), `Destination Host Unreachable` (nobody answers ARP), timeout (dropped), `Connection refused` (nobody listening). Explained it back in my own words; step 3 was wrong (put `resolvectl` there) and re-learned. Drill: "apt update doesn't work" → gateway changed to `.99` in netplan → fixed with `netplan try`, verified up to `sudo apt update`. Handbook: [Appendix A Part 2, A.12–A.14](handbook/appendix-a-troubleshooting.md#part-2--network-troubleshooting-flow-day-26-2026-11-23).
+
 ## Server Setup Handbook
 
 Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md). Every topic from Day 1 on has a chapter; the handbook's "Find by day" table maps each day to its section.
