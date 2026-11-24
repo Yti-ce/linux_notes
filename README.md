@@ -165,6 +165,12 @@ Warm-up 4/5: `sed 's/http/https/g'` with the `g` this time, `scp lab:/var/log/ng
 
 Bottom-up checklist: `ip -br addr` → `ip route` + ping the gateway → `ping 8.8.8.8` (an IP, so DNS is ruled out) → `dig name` vs `dig @8.8.8.8 name` (`resolvectl status` shows which DNS server) → `curl` / `ss -tlnp`. Error words tell the layer: `Network is unreachable` (no route), `Destination Host Unreachable` (nobody answers ARP), timeout (dropped), `Connection refused` (nobody listening). Explained it back in my own words; step 3 was wrong (put `resolvectl` there) and re-learned. Drill: "apt update doesn't work" → gateway changed to `.99` in netplan → fixed with `netplan try`, verified up to `sudo apt update`. Handbook: [Appendix A Part 2, A.12–A.14](handbook/appendix-a-troubleshooting.md#part-2--network-troubleshooting-flow-day-26-2026-11-23).
 
+## Day 27 — nginx reverse proxy and load balancing
+
+Warm-up 5/5: `find /etc -name "*.yaml" 2>/dev/null` right for the first time, `sudo netplan try`, `scp lab:~/notes.txt .`, `sed 's/8080/9090/g'`, `ps aux | grep nginx` (3rd time in a row).
+
+Reverse proxy = nginx is the only entry point and opens its **own** connection to the backend, so the backend logs `127.0.0.1` and the real client (`192.168.207.1`) is only in nginx's access log. Started two Python backends on `127.0.0.1:8001/8002`, put nginx in front with an `upstream` group (replacing the `default` site on 80). First run gave `A A B A`: 2 worker processes each kept their own round-robin counter; `zone backends 64k;` → strict `A B A B` from the VM and from Windows. Drill: one backend down → no client errors (nginx retries the other); both down → `502 Bad Gateway` → nginx alive → `error.log` `Connection refused ... upstream` → `ss` empty → restarted. Summarised `refused` vs `unreachable` vs timeout. Handbook: [Chapter 12](handbook/12-reverse-proxy.md), [A.15](handbook/appendix-a-troubleshooting.md#a15-502-bad-gateway-backends-down); config: [`handbook/configs/nginx/lb-lab`](handbook/configs/nginx/lb-lab).
+
 ## Server Setup Handbook
 
 Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md). Every topic from Day 1 on has a chapter; the handbook's "Find by day" table maps each day to its section.
