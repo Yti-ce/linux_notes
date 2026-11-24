@@ -415,6 +415,18 @@ Default ports: ssh 22, DNS 53 (UDP), HTTP 80, HTTPS 443. Server port fixed, clie
 
 Status: 200 OK · 301/302 redirect · 403 forbidden · 404 not found · 500/502 server error. subject = issuer → self-signed. `.key` 600, `.crt` 644.
 
+## Reverse proxy (Day 27)
+
+| Command | Meaning |
+|---|---|
+| `python3 -m http.server 8001 --bind 127.0.0.1 --directory ~/lb/a` | throwaway backend, loopback only |
+| `upstream backends { zone backends 64k; server 127.0.0.1:8001; ... }` + `proxy_pass http://backends;` | round robin; `zone` = one counter for all workers |
+| `sudo ln -s /etc/nginx/sites-available/X /etc/nginx/sites-enabled/` | enable a site; `rm` the link to disable |
+| `for i in 1 2 3 4 5 6; do curl -s localhost; done` | repeat a request |
+| `tail -n 20 /var/log/nginx/error.log` | `502` → `upstream:` shows which backend failed |
+
+502 = nginx alive, backend failed (504 = backend slow). `refused` = machine found, no program on the port; `unreachable` = machine not found; timeout = dropped (firewall).
+
 ## Network configuration (Day 22)
 
 | Command | Meaning |

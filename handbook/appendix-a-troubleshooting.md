@@ -1,6 +1,6 @@
 # Appendix A — Troubleshooting record
 
-Failures I caused on purpose and then fixed: five Linux ones on **Day 14** (2026-11-17, A.1–A.5) and four network ones on **Day 25** (2026-11-23, A.7–A.10). **Part 2** (Day 26) is the bottom-up network checklist (A.12) and a wrong-gateway drill (A.13). The chapters are organised by *what I learned*; this appendix is organised by *what broke*, so it is the place to start when something is wrong.
+Failures I caused on purpose and then fixed: five Linux ones on **Day 14** (2026-11-17, A.1–A.5) and four network ones on **Day 25** (2026-11-23, A.7–A.10). **Part 2** (Day 26) is the bottom-up network checklist (A.12) and a wrong-gateway drill (A.13); A.15 (Day 27) is a 502 behind the reverse proxy, with refused vs unreachable vs timeout. The chapters are organised by *what I learned*; this appendix is organised by *what broke*, so it is the place to start when something is wrong.
 
 ## A.0 Symptom → first command
 
@@ -16,6 +16,7 @@ Failures I caused on purpose and then fixed: five Linux ones on **Day 14** (2026
 | `Connection refused` | `sudo ss -tlnp \| grep ':<port> '` | nobody listening → `systemctl status` → `journalctl -u` / `sudo sshd -t` ([A.8](#a8-ssh-connection-refused-typo-in-sshd-config)) |
 | timeout, service fine inside | `sudo ufw status numbered` | rule order, first match wins ([A.9](#a9-website-times-out-from-one-machine-ufw-rule-order)) |
 | can't get out (apt, ping 8.8.8.8) | `ip route` → `ping -c 3 <gateway>` | `Destination Host Unreachable` from my own IP → wrong gateway in netplan ([A.13](#a13-apt-update-fails-wrong-gateway-in-netplan)); full flow in [A.12](#a12-bottom-up-checklist) |
+| `502 Bad Gateway` from nginx | `tail -n 20 /var/log/nginx/error.log` | `upstream:` = which backend; `sudo ss -tlnp` on that port ([A.15](#a15-502-bad-gateway-backends-down)) |
 | IP works, name doesn't | `ping -n 1 <name>` (shows the IP it resolved to) | hosts file, then DNS server ([A.10](#a10-name-doesnt-work-ip-does-wrong-hosts-entry)) |
 
 General method (from [6.2](06-logs.md#62-method)): **reproduce → read status/logs → find the exact cause → fix one thing → verify, including that nothing else broke.**
@@ -397,3 +398,23 @@ DNS (`192.168.207.2`) is on my own subnet, so with a wrong gateway names still r
 | only `dig @8.8.8.8 ...` | no comparison | `dig name` first, then `dig @8.8.8.8 name` |
 | `ping -c 8.8.8.8` | `-c` needs a count | `ping -c 3 8.8.8.8` |
 | `apt update` | `Permission denied (13)`: apt writes to root-owned dirs | `sudo apt update` |
+
+## A.15 502 Bad Gateway (backends down)
+
+*Day 27 (2026-11-24).* Setup and full logic chain in [12.6](12-reverse-proxy.md#126-drill-backends-die-502-bad-gateway).
+
+**Break:** nginx proxies to two backends (`127.0.0.1:8001`, `:8002`); stop both (`Ctrl+C`). With only one stopped, clients see nothing: nginx retries the other one.
+
+**Chain:** `curl -i localhost` → `502 Bad Gateway` (nginx answered, so the problem is behind it) → `systemctl status nginx` `active` → `error.log`: `connect() failed (111: Connection refused) while connecting to upstream ... upstream: "http://127.0.0.1:8001/"` → `sudo ss -tlnp | grep 800` empty → backends not running → start them → `ss` shows both → curl A/B again.
+
+### refused vs unreachable vs timeout
+
+| Error | What happened | Layer / where to look | Speed | Seen in |
+|---|---|---|---|---|
+| `Network is unreachable` | no route; nothing was sent | my routing table: `ip route` | instant | — |
+| `Destination Host Unreachable` | nobody answered ARP for that IP | network: IP / gateway / host off | seconds | [A.13](#a13-apt-update-fails-wrong-gateway-in-netplan) |
+| timeout / 100% loss | sent, nothing came back | something drops packets: firewall | slow | [11](11-firewall.md), [A.9](#a9-website-times-out-from-one-machine-ufw-rule-order) |
+| `Connection refused` | host alive and answered (TCP RST), **no program on that port** | the service: `ss -tlnp`, `systemctl status` | instant | [A.8](#a8-ssh-connection-refused-typo-in-sshd-config), A.15 |
+
+`unreachable` = can't find the **machine**; `refused` = found the machine, not the **program**; timeout = someone **drops** silently. `ping` has no ports, so it can never say `refused`.
+

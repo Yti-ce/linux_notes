@@ -1,0 +1,26 @@
+# /etc/nginx/sites-available/lb-lab  (Day 27, handbook Chapter 12)
+# Enable:  sudo rm /etc/nginx/sites-enabled/default
+#          sudo ln -s /etc/nginx/sites-available/lb-lab /etc/nginx/sites-enabled/
+#          sudo nginx -t && sudo systemctl reload nginx
+# Undo:    sudo rm /etc/nginx/sites-enabled/lb-lab
+#          sudo ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
+#          sudo nginx -t && sudo systemctl reload nginx
+
+# The group of backends ("kitchens"). Default method: round robin.
+upstream backends {
+    zone backends 64k;          # shared memory: all worker processes use ONE round-robin counter
+    server 127.0.0.1:8001;      # backend A: python3 -m http.server 8001 --bind 127.0.0.1 --directory ~/lb/a
+    server 127.0.0.1:8002;      # backend B: python3 -m http.server 8002 --bind 127.0.0.1 --directory ~/lb/b
+}
+
+server {
+    listen 80 default_server;   # takes over port 80 from the "default" site
+    server_name _;
+
+    location / {
+        proxy_pass http://backends;                                   # hand the request to the group
+        proxy_set_header Host $host;                                  # keep the name the client asked for
+        proxy_set_header X-Real-IP $remote_addr;                      # the real client IP (connection 1)
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;  # chain of client/proxy IPs
+    }
+}
