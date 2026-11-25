@@ -13,6 +13,7 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 | Hostname / user | `admin` / `admin123` |
 | Network | `ens33` NAT `192.168.207.50/24` (static, Day 22); `ens37` host-only `192.168.50.10/24` |
 | Access | `ssh admin123@ubuntu-lab` (Windows hosts → .207.50) or `ssh admin123@192.168.50.10` |
+| Rebuild test (Day 28) | second VM `rebuild`, `192.168.207.60`, built from this handbook only → [Appendix C](appendix-c-rebuild-test.md) |
 
 ## Contents
 
@@ -26,13 +27,14 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 | [5](05-scripts.md) | Ops scripts: bash basics, backup, batch rename, disk alert ([`scripts/`](scripts/)) | Day 10 | ✅ Day 10 |
 | [6](06-logs.md) | Logs and troubleshooting: `journalctl`, 3 failures on purpose, log analysis | Day 11–12 | ✅ Day 11–12 |
 | [7](07-cron.md) | Scheduled jobs: `crontab`, time fields, PATH and `%` pitfalls | Day 13 | ✅ Day 13 |
-| [A](appendix-a-troubleshooting.md) | Troubleshooting record: symptom → first command; 5 Linux failures (A.1–A.5), 4 network failures (A.7–A.10); Part 2: bottom-up network checklist (A.12), wrong gateway (A.13); 502 behind a reverse proxy (A.15) | Day 14, 25–27 | ✅ Day 14, 25–27 |
+| [A](appendix-a-troubleshooting.md) | Troubleshooting record: symptom → first command; 5 Linux failures (A.1–A.5), 4 network failures (A.7–A.10); Part 2: bottom-up network checklist (A.12), wrong gateway (A.13); 502 behind a reverse proxy (A.15); local DNS resolver stopped (A.16) | Day 14, 25–28 | ✅ Day 14, 25–28 |
 | [8](08-networking.md) | Networking basics: TCP/IP and OSI layers, tcpdump, Wireshark, MAC vs IP, TTL; IP and subnets (8.2); routing and NAT, Packet Tracer lab (8.3); DHCP and ARP (8.4); DNS (8.5); ports and connections (8.6); HTTP and HTTPS (8.7); VLANs and trunks (8.8) | Day 15–21, 25 | ✅ Day 15–21, 25 |
 | [B](appendix-b-what-happens-url.md) | What happens when you type a URL: DNS → TCP → TLS → HTTP on one page | Day 21 | ✅ Day 21 |
 | [9](09-network-config.md) | Network configuration: netplan static IP, host-only second NIC, routing table | Day 22 | ✅ Day 22 |
-| [10](10-ssh-hardening.md) | SSH hardening: key login, `~/.ssh/config`, no password / root login, local port forwarding | Day 23 | ✅ Day 23 |
-| [11](11-firewall.md) | Firewall: ufw allow 22/80/443, nmap from Windows, iptables rules behind ufw, blocking 80 and troubleshooting | Day 24 | ✅ Day 24 |
+| [10](10-ssh-hardening.md) | SSH hardening: key login, `~/.ssh/config`, no password / root login, local port forwarding; How-To-Secure comparison, `AllowGroups` (10.8) | Day 23, 28 | ✅ Day 23, 28 |
+| [11](11-firewall.md) | Firewall: ufw allow 22/80/443, nmap from Windows, iptables rules behind ufw, blocking 80 and troubleshooting; `ufw limit` for ssh (11.9) | Day 24, 28 | ✅ Day 24, 28 |
 | [12](12-reverse-proxy.md) | nginx reverse proxy and load balancing: two Python backends, `upstream` round robin, `zone`, 502 drill ([`configs/nginx/lb-lab`](configs/nginx/lb-lab)) | Day 27 | ✅ Day 27 |
+| [C](appendix-c-rebuild-test.md) | Rebuild test: a second server built from this handbook only, 11 steps, 10 gaps found and fixed | Day 28 | ✅ Day 28 |
 
 ## Find by day
 
@@ -66,5 +68,6 @@ A step-by-step handbook for building and running a small Ubuntu server, written 
 | 25 | Week 4 review: 4 drills broken by someone else — wrong IP in netplan, sshd typo (`Connection refused`), ufw rule order (first match wins), wrong Windows hosts entry; VLAN 10/20 and a trunk in Packet Tracer | [A.7–A.10](appendix-a-troubleshooting.md#a7-second-nic-unreachable-wrong-ip-in-netplan), [8.8](08-networking.md#88-vlans-and-trunks) |
 | 26 | Network troubleshooting method: bottom-up checklist IP → gateway → outside IP → DNS → service, error words; drill: wrong gateway in netplan (`Destination Host Unreachable`) | [A.12–A.14](appendix-a-troubleshooting.md#part-2--network-troubleshooting-flow-day-26-2026-11-23) |
 | 27 | Reverse proxy (two TCP connections, backend sees 127.0.0.1), round robin with `upstream`, per-worker counters and `zone`, client IP in access.log; drill: backends down → `502 Bad Gateway` → `error.log` → `ss` | [Chapter 12](12-reverse-proxy.md), [A.15](appendix-a-troubleshooting.md#a15-502-bad-gateway-backends-down) |
+| 28 | Phase 1 quiz (12/20 + 12/25 extra); rebuilt the server on a new VM from the handbook only; DNS drill (stopped `systemd-resolved`, `ss -ulnp`); How-To-Secure comparison: `AllowGroups`, `MaxAuthTries`, `ufw limit` | [Appendix C](appendix-c-rebuild-test.md), [A.16](appendix-a-troubleshooting.md#a16-names-dont-resolve-local-dns-resolver-stopped), [10.8](10-ssh-hardening.md#108-compared-with-how-to-secure-a-linux-server-day-28), [11.9](11-firewall.md#119-rate-limit-ssh-compared-with-how-to-secure-a-linux-server-day-28) |
 
 Quick lookup of single commands: [cheatsheet.md](../cheatsheet.md).

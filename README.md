@@ -171,9 +171,15 @@ Warm-up 5/5: `find /etc -name "*.yaml" 2>/dev/null` right for the first time, `s
 
 Reverse proxy = nginx is the only entry point and opens its **own** connection to the backend, so the backend logs `127.0.0.1` and the real client (`192.168.207.1`) is only in nginx's access log. Started two Python backends on `127.0.0.1:8001/8002`, put nginx in front with an `upstream` group (replacing the `default` site on 80). First run gave `A A B A`: 2 worker processes each kept their own round-robin counter; `zone backends 64k;` → strict `A B A B` from the VM and from Windows. Drill: one backend down → no client errors (nginx retries the other); both down → `502 Bad Gateway` → nginx alive → `error.log` `Connection refused ... upstream` → `ss` empty → restarted. Summarised `refused` vs `unreachable` vs timeout. Handbook: [Chapter 12](handbook/12-reverse-proxy.md), [A.15](handbook/appendix-a-troubleshooting.md#a15-502-bad-gateway-backends-down); config: [`handbook/configs/nginx/lb-lab`](handbook/configs/nginx/lb-lab).
 
+## Day 28 — Phase 1 milestone: quiz, rebuild from the handbook, hardening
+
+**Quiz (closed book):** 12/20 on Day 28 (Day 14 was 6/20), plus 12/25 on a second set covering what the first one missed. Pattern: the commands drilled every day (`chown :ops`, `ss -tlnp`, `find -name`, `sed s///g`, `scp`) were right; things learned once and not repeated were mostly gone (`tail -f`, `df`/`du`, `$?`, `usermod -aG`, `tar -xzf`, `:q!`, `> f 2>&1`, `grep -r`, `tcpdump`, DNS record types). Those are now on the daily warm-up list.
+
+**Rebuild:** a second VM `rebuild` (`192.168.207.60`) built with nothing but the handbook: install → static IP → key-only ssh → nginx 80/443 → ufw → reboot check, all passed. Ten gaps found on the way (empty CD drive → PXE boot, refused installer mirror, running ssh inside the VM, hosts name vs ssh alias, PowerShell `curl`, `ssh -t` for sudo…) and fixed in the handbook. **Drill:** names stopped resolving → bottom-up → `dig` `127.0.0.53#53: connection refused` but `dig @8.8.8.8` fine → `ss -ulnp` empty → `systemd-resolved` cleanly stopped → started. **Hardening** from How-To-Secure-A-Linux-Server: `AllowGroups sshusers`, `MaxAuthTries 3`, `LoginGraceTime 30`, `ufw limit 22/tcp`; listed what I skipped and why. Handbook: [Appendix C](handbook/appendix-c-rebuild-test.md), [A.16](handbook/appendix-a-troubleshooting.md#a16-names-dont-resolve-local-dns-resolver-stopped), [10.8](handbook/10-ssh-hardening.md#108-compared-with-how-to-secure-a-linux-server-day-28), [11.9](handbook/11-firewall.md#119-rate-limit-ssh-compared-with-how-to-secure-a-linux-server-day-28).
+
 ## Server Setup Handbook
 
-Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md). Every topic from Day 1 on has a chapter; the handbook's "Find by day" table maps each day to its section.
+Phase 1 milestone, written chapter by chapter: [handbook/](handbook/README.md). **Tested on Day 28 by rebuilding the server on a fresh VM from the handbook alone** ([Appendix C](handbook/appendix-c-rebuild-test.md)). Every topic from Day 1 on has a chapter; the handbook's "Find by day" table maps each day to its section.
 
 How the files fit together:
 
@@ -224,6 +230,14 @@ How the files fit together:
 | Disk 97% full | 17 GB hidden file `/var/tmp/.cache_data` (on purpose); `du dir/*` skipped it | `du -sh` level by level, `ls -lah`, `rm` |
 | tom: `Permission denied` in `/srv/ops` | Directory group changed to `root` (on purpose); first fixes used `dev`, then tom's private group | `sudo chown :ops /srv/ops`, test tom **and** jerry |
 | cron job never wrote `hello.log` | Script had no `x` bit; error discarded (`No MTA installed`) | `chmod +x`; add `>> log 2>&1` to every cron line |
+| New VM: `PXE-M0F` / `Operating System not found` on first boot | "Install the OS later" left the virtual CD empty | VM → Settings → CD/DVD → ISO file, *Connect at power on* |
+| Installer mirror `my.archive.ubuntu.com:80 ... Connection refused` | That mirror had nothing listening on 80 | Mirror `http://archive.ubuntu.com/ubuntu/` |
+| `ssh admin123@192.168.207.60` asked for a password after copying the key | Ran it inside the VM (prompt `admin123@rebuild`), which has no private key | Run from Windows (`PS C:\Users\HP>`) |
+| `hp@rebuild-lab: Permission denied (publickey)` | Used the hosts name; no `User` → Windows user name sent | `ssh rebuild` (alias with `User admin123`) |
+| PowerShell `curl -I` asked for `Uri:` | `curl` is `Invoke-WebRequest` in PowerShell | `curl.exe -I` |
+| `ssh rebuild "sudo ufw status"` → `sudo: A terminal is required` | No terminal for the password | `ssh -t` |
+| `dig` → `127.0.0.53#53: connection refused` (drill) | `systemd-resolved` stopped | `ss -ulnp`, `systemctl start systemd-resolved` |
+| `usermod: group 'sshuers' does not exist` | Typo | `sshusers`; check `id` before `AllowGroups` |
 
 ## Key concepts learned
 

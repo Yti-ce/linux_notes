@@ -1,6 +1,6 @@
 # Appendix A — Troubleshooting record
 
-Failures I caused on purpose and then fixed: five Linux ones on **Day 14** (2026-11-17, A.1–A.5) and four network ones on **Day 25** (2026-11-23, A.7–A.10). **Part 2** (Day 26) is the bottom-up network checklist (A.12) and a wrong-gateway drill (A.13); A.15 (Day 27) is a 502 behind the reverse proxy, with refused vs unreachable vs timeout. The chapters are organised by *what I learned*; this appendix is organised by *what broke*, so it is the place to start when something is wrong.
+Failures I caused on purpose and then fixed: five Linux ones on **Day 14** (2026-11-17, A.1–A.5) and four network ones on **Day 25** (2026-11-23, A.7–A.10). **Part 2** (Day 26) is the bottom-up network checklist (A.12) and a wrong-gateway drill (A.13); A.15 (Day 27) is a 502 behind the reverse proxy, with refused vs unreachable vs timeout. A.16 (Day 28) is a stopped local DNS resolver on the rebuilt server. The chapters are organised by *what I learned*; this appendix is organised by *what broke*, so it is the place to start when something is wrong.
 
 ## A.0 Symptom → first command
 
@@ -18,6 +18,7 @@ Failures I caused on purpose and then fixed: five Linux ones on **Day 14** (2026
 | can't get out (apt, ping 8.8.8.8) | `ip route` → `ping -c 3 <gateway>` | `Destination Host Unreachable` from my own IP → wrong gateway in netplan ([A.13](#a13-apt-update-fails-wrong-gateway-in-netplan)); full flow in [A.12](#a12-bottom-up-checklist) |
 | `502 Bad Gateway` from nginx | `tail -n 20 /var/log/nginx/error.log` | `upstream:` = which backend; `sudo ss -tlnp` on that port ([A.15](#a15-502-bad-gateway-backends-down)) |
 | IP works, name doesn't | `ping -n 1 <name>` (shows the IP it resolved to) | hosts file, then DNS server ([A.10](#a10-name-doesnt-work-ip-does-wrong-hosts-entry)) |
+| Linux: `dig name` → `127.0.0.53#53: connection refused` | `sudo ss -ulnp \| grep :53` | empty → `systemctl status systemd-resolved` ([A.16](#a16-names-dont-resolve-local-dns-resolver-stopped)) |
 
 General method (from [6.2](06-logs.md#62-method)): **reproduce → read status/logs → find the exact cause → fix one thing → verify, including that nothing else broke.**
 
@@ -418,3 +419,30 @@ DNS (`192.168.207.2`) is on my own subnet, so with a wrong gateway names still r
 
 `unreachable` = can't find the **machine**; `refused` = found the machine, not the **program**; timeout = someone **drops** silently. `ping` has no ports, so it can never say `refused`.
 
+
+## A.16 Names don't resolve (local DNS resolver stopped)
+
+*Day 28 (2026-11-25), on the rebuilt server `rebuild` (`192.168.207.60`).* Someone else broke it; I only saw the symptom.
+
+**Symptom:** `sudo apt update` fails, `ping google.com` fails.
+
+**Chain (bottom-up, [A.12](#a12-bottom-up-checklist)):**
+
+| Question | Command | Saw | Conclusion |
+|---|---|---|---|
+| NIC has an IP? | `ip -br addr` | `ens33 UP 192.168.207.60/24` | NIC OK |
+| gateway right? | `ip route` | `default via 192.168.207.2` | routing OK |
+| reach the internet by IP? | `ping -c 3 8.8.8.8` | 0% loss | network fine → it's name resolution |
+| local DNS works? | `dig google.com` | `communications error to 127.0.0.53#53: connection refused` | the **local** resolver is broken |
+| outside DNS works? | `dig @8.8.8.8 google.com` | `NOERROR`, an A record | only the local resolver is broken |
+| who listens on 53? | `sudo ss -ulnp \| grep :53` (**u** = UDP; DNS uses UDP) | nothing | refused = nobody listening |
+| who should? | `cat /etc/resolv.conf` (header) or compare with a healthy server | `systemd-resolved` | found the service |
+| what happened to it? | `sudo journalctl -u systemd-resolved -n 20 --no-pager` | `Stopping ...` → `Deactivated successfully` → `Stopped`, no error | stopped **on purpose** (`systemctl stop`), not a crash |
+| fix | `sudo systemctl start systemd-resolved` | — | — |
+| verify | `systemctl is-enabled systemd-resolved`; `sudo ss -ulnp \| grep :53`; `dig google.com`; `sudo apt update` | `enabled`; `127.0.0.53%lo:53` and `127.0.0.54:53` back; `SERVER: 127.0.0.53`; apt fetches | ✅ |
+
+**Lessons**
+- `refused` from `127.0.0.53` means the same as anywhere else: the machine is there, the program is not. Next command is `ss`, then `systemctl`.
+- `ss -t` lists TCP sockets, `ss -u` UDP. DNS is UDP, so `ss -tlnp` would have shown nothing useful.
+- **No error in the journal is a clue.** A crash says `Main process exited, code=...` or `Failed with result ...`; a clean `Stopping` → `Stopped` means someone ran `systemctl stop`. Next step in real life: who did it at that time (`last`, `sudo journalctl --since "10:36"`).
+- `dig +trace name @192.168.207.2` timed out — not a symptom: VMware's DNS proxy can't answer `+trace` (which starts at the root servers). Test the gateway's DNS with plain `dig @192.168.207.2 name`.

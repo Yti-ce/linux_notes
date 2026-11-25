@@ -468,6 +468,20 @@ Keep one session open while changing sshd; test key login before turning passwor
 
 Site down? service (`systemctl status`) → port (`ss -tlnp`) → inside (`curl -I http://localhost`) → firewall (`ufw status`, `UFW BLOCK` log).
 
+## Hardening and rebuild (Day 28)
+
+| Command | Meaning |
+|---|---|
+| `sudo groupadd sshusers` + `sudo usermod -aG sshusers admin123` + `id admin123` | ssh group; **check `id` before** adding `AllowGroups sshusers` |
+| `AllowGroups` / `MaxAuthTries 3` / `LoginGraceTime 30` in `00-hardening.conf` | who may ssh in / tries per connection / seconds to log in |
+| `sudo ufw limit 22/tcp comment 'ssh'` | allow, but block an IP after 6 connections in 30 s; replaces `allow 22/tcp` |
+| `sudo ss -ulnp \| grep :53` | **UDP** listeners (DNS). `-t` = TCP, `-u` = UDP |
+| `dig name` → `127.0.0.53#53: connection refused` | local resolver down → `systemctl status systemd-resolved` |
+| `ssh -t host "sudo cmd"` | remote sudo needs `-t` (a terminal for the password) |
+| `curl.exe -I http://host` | in PowerShell; plain `curl` there is `Invoke-WebRequest` |
+| `ssh-keygen -R name` | forget a host's key in `known_hosts` |
+
+
 ## Day 14 quiz and troubleshooting
 
 Quiz 6/20 (closed book). Full record of the 5 failure scenarios: [handbook Appendix A](handbook/appendix-a-troubleshooting.md).

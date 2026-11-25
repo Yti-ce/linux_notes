@@ -7,22 +7,43 @@ Learned on **Day 1** (1.1–1.4: VM, install, network, SSH), **Day 4** (1.6: apt
 | Setting | Value | Why |
 |---|---|---|
 | Location | `E:\VMs\ubuntu-lab` | `C:` was nearly full; the first install failed because the disk could not grow |
+| Folder | Type the VM's **own** folder, e.g. `E:\VMs\ubuntu-rebuild` | Pointing at `E:\VMs` itself mixes the new `.vmx` and lock files with other VMs (Day 28 rebuild) |
 | Guest OS | "Install the operating system later" | Skips VMware Easy Install so the installer can be run by hand |
 | Resources | 2 vCPU, 4 GB RAM, 30 GB single-file disk | Enough for nginx, Docker later, and leaves RAM for the 16 GB host |
 | Network | NAT (VMnet8) | Host can reach the VM directly by its IP, no port forwarding |
 
-Attach the Ubuntu Server ISO and verify it first:
+Verify the Ubuntu Server ISO first:
 
 ```powershell
 Get-FileHash .\ubuntu-26.04.1-live-server-amd64.iso -Algorithm SHA256
 # compare with SHA256SUMS on the official release page
 ```
 
+**Attach the ISO before the first power-on.** "Install the operating system later" leaves the CD drive empty. If you power on now, the VM finds no OS and tries a network boot instead (Day 28 rebuild):
+
+```
+Network boot from Intel E1000 ...
+PXE-M0F: Exiting Intel PXE ROM.
+Operating System not found
+```
+
+Fix (VM powered off):
+
+1. **VM → Settings → CD/DVD (SATA)**
+2. Tick **Connect at power on**
+3. **Use ISO image file** → Browse → `ubuntu-26.04.1-live-server-amd64.iso`
+4. OK, power on. The Ubuntu installer should start.
+
 ## 1.2 Install Ubuntu Server
 
 1. Default storage layout (LVM, ext4).
 2. **Tick "Install OpenSSH server".** Without it there is no remote login.
 3. If the installer hangs at "installing kernel", choose **Continue without network**, finish offline, and fix the network afterwards (1.3).
+4. **Mirror page shows `Connection refused`** (Day 28 rebuild: the Malaysian mirror `my.archive.ubuntu.com:80` refused). DNS and the network worked — the mirror server just had nothing listening on 80. Change the address to `http://archive.ubuntu.com/ubuntu/` → **Try again now**. Or choose Done anyway and run `sudo apt update` after the install.
+5. **Storage summary:** check the size of `ubuntu-lv` mounted at `/`. If it is only about half the disk and there is a big `free space` line, Edit `ubuntu-lv` → max size.
+6. **Profile:** give every VM its **own hostname** (`admin`, `rebuild`, …). The prompt `user@hostname` is how you tell machines apart.
+
+**Building a second server next to the first one** (Day 28): use a different static IP (`.60`, not `.50`) and a different name in the Windows hosts file, or the two VMs fight over the same address.
 
 ## 1.3 Network (DHCP)
 

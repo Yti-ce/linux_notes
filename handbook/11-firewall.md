@@ -205,24 +205,54 @@ PS> curl.exe -m 5 http://ubuntu-lab
 - [x] Allowed only `80/tcp`, `443/tcp` besides 22
 - [x] nmap from Windows: 22/80/443 `open`, 8080 `filtered`
 - [x] Logging on; know how to read `[UFW BLOCK]` lines
+- [x] ssh rate-limited with `ufw limit` (11.9, Day 28)
 - [ ] Later: remove the unused 8080 site from nginx instead of only hiding it (Chapter 12 reorganises nginx)
 
-## 11.9 Commands
+## 11.9 Rate-limit ssh, compared with How-To-Secure-A-Linux-Server (Day 28)
+
+From the guide's [UFW section](https://github.com/imthenachoman/How-To-Secure-A-Linux-Server#firewall-with-ufw-uncomplicated-firewall): use `limit` for ssh instead of `allow`. ufw then denies an IP that opens **6 or more connections within 30 seconds** — slows down password-guessing bots.
+
+```console
+admin123@rebuild:~$ sudo ufw limit 22/tcp comment 'ssh, rate limited'
+admin123@rebuild:~$ sudo ufw status verbose
+To                         Action      From
+22/tcp                     LIMIT IN    Anywhere                   # ssh, rate limited
+80/tcp                     ALLOW IN    Anywhere
+443/tcp                    ALLOW IN    Anywhere
+```
+
+`limit 22/tcp` **replaced** the old `allow 22/tcp` in place: ufw keeps one rule per port + protocol (same lesson as [A.9](appendix-a-troubleshooting.md#a9-website-times-out-from-one-machine-ufw-rule-order)). So `sudo ufw delete allow 22/tcp` afterwards says `Could not delete non-existent rule` — nothing is wrong. `comment` puts a note after `#` in the status list.
+
+**Not applied:** `default deny outgoing` + allow-lists for DNS/NTP/HTTP out. Safer on a real server, but in the lab it breaks `apt` and DNS every time I forget a port. Revisit in the cloud phase.
+
+### What nmap shows, by case
+
+| ufw | program listening? | nmap | client sees |
+|---|---|---|---|
+| denied | — | `filtered` | timeout |
+| allowed | no | `closed` | `Connection refused` |
+| allowed | yes | `open` | the service |
+
+On Day 28 nmap showed 443 `open` on `rebuild` because I had also set up the self-signed HTTPS site (8.7): allowed **and** nginx listening on 443. `ufw allow` only opens the door; whether anyone is behind it is `ss -tlnp`.
+
+## 11.10 Commands
 
 | Command | Use |
 |---|---|
 | `sudo ufw status verbose` | on/off, default policy, rules |
 | `sudo ufw default deny incoming` / `allow outgoing` | default policy |
 | `sudo ufw allow 22/tcp` | allow a port (**22 first**) |
+| `sudo ufw limit 22/tcp comment '...'` | allow, but block an IP after 6 connections in 30 s |
 | `sudo ufw enable` / `disable` | turn on / off |
 | `sudo ufw delete allow 80/tcp` | remove a rule (or `ufw status numbered` + `ufw delete N`) |
 | `nmap -p 22,80,443,8080 IP` | scan from **outside**; `open` / `closed` / `filtered` |
 | `sudo iptables -L INPUT -n` | the real rules; `policy` = what happens when nothing matches |
 | `sudo iptables -L ufw-user-input -n` | my ufw rules as iptables |
 | `curl -I http://localhost` | test from inside: inside OK + outside fails → path / firewall |
+| `curl.exe -I http://host` | same from **Windows PowerShell**: plain `curl` there is `Invoke-WebRequest` and rejects `-I` |
 | `sudo journalctl -k \| grep "UFW BLOCK"` | dropped packets (SRC, DPT, SYN) |
 
-## 11.10 Mistakes I made (Day 24)
+## 11.11 Mistakes I made (Day 24)
 
 | Wrote | Problem | Fix |
 |---|---|---|
