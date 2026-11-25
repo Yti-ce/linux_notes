@@ -28,6 +28,8 @@ id_ed25519.pub    101 bytes   ← public
 known_hosts
 ```
 
+**Check the prompt before every command.** `PS C:\Users\HP>` = Windows, `admin123@rebuild:~$` = the VM. On Day 28 I ran `ssh admin123@192.168.207.60` *inside* the VM, so it connected to itself, found no private key there, and asked for a password — that proves nothing about key login.
+
 Windows has no `ssh-copy-id`, so pipe the public key over ssh (asks for the password one last time):
 
 ```powershell
@@ -42,6 +44,8 @@ PS> type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh admin123@ubuntu-lab "mkdir -
 | `chmod 700 ~/.ssh`, `chmod 600 authorized_keys` | only me |
 
 **Why 700 / 600:** the last two digits are `0` — group and others get nothing. If someone else could **write** `authorized_keys`, they could add their own key and log in as me. sshd checks this and **ignores the key** if the folder or file is too open. The folder has `x` because you need `x` to enter a directory; `authorized_keys` is data that sshd reads, never runs, so it has no `x`.
+
+**First connection to a new name or IP:** ssh shows the server's fingerprint and asks `yes/no`, then prints `Permanently added '...' to the list of known hosts`. That is normal: ssh remembers name ↔ host key so it can warn you if the key ever changes (someone pretending to be the server). A wrong entry can be removed with `ssh-keygen -R name`.
 
 Paths: Windows uses `\`, Linux uses `/`. PowerShell accepts both; inside the VM only `/` works.
 
@@ -60,6 +64,8 @@ Host lab
 PS> ssh lab
 Welcome to Ubuntu 26.04.1 LTS ...        ← no password prompt = key login works
 ```
+
+**hosts name ≠ ssh alias.** On Day 28 the Windows hosts file had `rebuild-lab → .60` and `~/.ssh/config` had `Host rebuild`. `ssh rebuild-lab` only got the IP from hosts, not the user, so ssh used my Windows user name and failed with `hp@rebuild-lab: Permission denied (publickey)`. `ssh rebuild` works because the alias carries `User admin123`. Look at the user name in the error first.
 
 The config only stores the private key's **path**. What makes the login work is the pair: private key on Windows + public key in the VM's `authorized_keys`.
 
@@ -173,9 +179,54 @@ Real use: services that listen only on `127.0.0.1` (databases, admin pages) can 
 - [x] `sshd -t` clean, `sshd -T` shows `no` / `no`, `systemctl restart ssh`
 - [x] Verified from a new window: key ✅, password ❌, root ❌
 - [x] Client alias `ssh lab`
-- [ ] Firewall allows only the ports I need → [Chapter 11](11-firewall.md)
+- [x] Firewall allows only the ports I need → [Chapter 11](11-firewall.md)
+- [x] Only group `sshusers` may log in; `MaxAuthTries 3`, `LoginGraceTime 30` (10.8, Day 28)
 
-## 10.8 Commands
+## 10.8 Compared with How-To-Secure-A-Linux-Server (Day 28)
+
+Checked my setup against the SSH section of [How-To-Secure-A-Linux-Server](https://github.com/imthenachoman/How-To-Secure-A-Linux-Server#the-ssh-server) (imthenachoman, read 2026-11-25) and applied what fits a lab server, on `rebuild`.
+
+**Applied**
+
+```console
+admin123@rebuild:~$ sudo groupadd sshusers
+admin123@rebuild:~$ sudo usermod -aG sshusers admin123      # -a: append, keep my other groups
+admin123@rebuild:~$ id admin123                              # must show sshusers BEFORE the next step
+```
+
+Added to `/etc/ssh/sshd_config.d/00-hardening.conf`:
+
+```
+AllowGroups sshusers        # only members of this group may log in over ssh
+MaxAuthTries 3              # drop the connection after 3 failed attempts
+LoginGraceTime 30           # 30 s to finish logging in
+X11Forwarding no            # no graphical forwarding; a server has no desktop
+AllowAgentForwarding no     # don't pass my local ssh agent to the server
+```
+
+```console
+admin123@rebuild:~$ sudo sshd -t && sudo systemctl restart ssh
+admin123@rebuild:~$ sudo sshd -T | grep -E "allowgroups|maxauthtries|logingracetime|x11forwarding"
+logingracetime 30
+maxauthtries 3
+x11forwarding no
+allowgroups sshusers
+```
+
+Then `ssh rebuild` from a **new** window. If `id` had not shown `sshusers`, `AllowGroups` would have locked me out: on Day 28 I typed `sshuers`, got `group 'sshuers' does not exist`, and only noticed because I checked `id`.
+
+**Not applied, and why**
+
+| Guide item | Why not (for now) |
+|---|---|
+| `AllowTcpForwarding no` | breaks the `-L` tunnel in 10.6, which I use |
+| Ciphers / KexAlgorithms / MACs list | the guide's list is Mozilla's 2019 recommendation; the OpenSSH 10 defaults are newer. Revisit when I understand the algorithms |
+| `UseDNS yes` | the guide sets it; with no reverse DNS in my lab it only slows logins. Default `no` kept |
+| 2FA (Google Authenticator) | later; needs a phone app and PAM |
+| Fail2Ban | on my to-learn list; ufw `limit` (11.11) covers the basic case today |
+| Duplicate-setting check (`awk ... \| uniq -c`) | written for one big `sshd_config`; I use drop-in files, so `sudo sshd -T` (the settings in effect) is the check |
+
+## 10.9 Commands
 
 | Command | Use |
 |---|---|
@@ -185,10 +236,12 @@ Real use: services that listen only on `127.0.0.1` (databases, admin pages) can 
 | `sudo sshd -t` | config syntax check |
 | `sudo sshd -T \| grep -E "a\|b"` | settings in effect |
 | `sudo systemctl restart ssh` | apply |
+| `sudo usermod -aG sshusers user` + `AllowGroups sshusers` | only that group may ssh in |
+| `ssh -t host "sudo cmd"` | run a sudo command remotely (`-t` gives sudo a terminal for the password) |
 | `ssh -o PubkeyAuthentication=no user@host` | test that passwords are refused |
 | `ssh -L 8080:localhost:80 lab` | local port forward |
 
-## 10.9 Mistakes I made (Day 23)
+## 10.10 Mistakes I made (Day 23)
 
 | Wrote | Problem | Fix |
 |---|---|---|
