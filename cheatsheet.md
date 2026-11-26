@@ -482,6 +482,30 @@ Site down? service (`systemctl status`) → port (`ss -tlnp`) → inside (`curl 
 | `ssh-keygen -R name` | forget a host's key in `known_hosts` |
 
 
+## Disk full drill (Day 29)
+
+| Command | Meaning |
+|---|---|
+| `sudo du -sh /* 2>/dev/null \| sort -h` | start from `/`, biggest **last**; go one level deeper each time |
+| subdirs add up to much less than the parent | hidden files: `*` skips names starting with `.` → `sudo ls -lah <dir>` |
+| `ls -l` shows `4.0K` for a directory | the directory's own list of names, not its contents — use `du` |
+| `sort -h` vs `sort -rn` | `-h` understands K/M/G (after `du -sh`); `-rn` for plain numbers (after `uniq -c`) |
+| `rm file` / `rmdir dir` | delete a file / an **empty** directory; no recycle bin — `ls` the path first |
+
+## Git basics (Day 29)
+
+| Command | Meaning |
+|---|---|
+| `git config --global user.name "..."` / `user.email` / `init.defaultBranch main` | once per machine; stored in `~/.gitconfig` |
+| `git init` | make the current folder a repo (creates hidden `.git` — all history lives there, never delete it) |
+| `git status` | what's going on — run it whenever unsure |
+| `git add f` → `git commit -m "Add backup script"` | working dir → staging area → repository |
+| red `modified` / green `Changes to be committed` / `working tree clean` | changed, not added / added, not committed / everything committed |
+| `git diff` / `git diff --staged` / `git show` | not yet added / added, about to be committed / last commit |
+| `git log --oneline` | one line per commit, newest first; `HEAD -> main` = where I am |
+| `git clone URL` | download a repo with its whole history |
+| `shellcheck script.sh` | lint a bash script before running it; no output = no problems. SC2086 = quote your variables `"$var"` |
+
 ## Day 14 quiz and troubleshooting
 
 Quiz 6/20 (closed book). Full record of the 5 failure scenarios: [handbook Appendix A](handbook/appendix-a-troubleshooting.md).

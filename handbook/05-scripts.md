@@ -195,3 +195,6 @@ Earlier draft mistakes: the message had `29` typed in (must be `$usage`, or it r
 5. Exit code tells the truth: `0` only on real success.
 6. Test: no arguments, bad argument, **and** the normal case. Read the output, then `echo $?`.
 7. No spaces in file names; copy syntax exactly (`-d "$x"`, not `-d"$x"`).
+8. Lint before running: `shellcheck script.sh` (`sudo apt install shellcheck`). No output = no problems.
+
+**Day 29 shellcheck pass on the four scripts in [`scripts/`](scripts/):** one finding — `backup.sh` line 18 `~/backups/$name` → `SC2086 (info): Double quote to prevent globbing and word splitting`. Without quotes, a value with a space (`my backup.tar.gz`) becomes **two arguments**, and a `*` in it would expand to file names. Here `$name` comes from `date` so it never has spaces, but the rule is simpler than the exception: fixed to `~/backups/"$name"`. Re-run: no output.
