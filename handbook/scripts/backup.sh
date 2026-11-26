@@ -15,5 +15,5 @@ fi
 
 mkdir -p ~/backups
 name=backup-$(date +%Y%m%d-%H%M%S).tar.gz
-tar -czf ~/backups/$name "$src"
+tar -czf ~/backups/"$name" "$src"
 echo "Backup created: ~/backups/$name"

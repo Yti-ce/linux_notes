@@ -1,6 +1,6 @@
 # Appendix A — Troubleshooting record
 
-Failures I caused on purpose and then fixed: five Linux ones on **Day 14** (2026-11-17, A.1–A.5) and four network ones on **Day 25** (2026-11-23, A.7–A.10). **Part 2** (Day 26) is the bottom-up network checklist (A.12) and a wrong-gateway drill (A.13); A.15 (Day 27) is a 502 behind the reverse proxy, with refused vs unreachable vs timeout. A.16 (Day 28) is a stopped local DNS resolver on the rebuilt server. The chapters are organised by *what I learned*; this appendix is organised by *what broke*, so it is the place to start when something is wrong.
+Failures I caused on purpose and then fixed: five Linux ones on **Day 14** (2026-11-17, A.1–A.5) and four network ones on **Day 25** (2026-11-23, A.7–A.10). **Part 2** (Day 26) is the bottom-up network checklist (A.12) and a wrong-gateway drill (A.13); A.15 (Day 27) is a 502 behind the reverse proxy, with refused vs unreachable vs timeout. A.16 (Day 28) is a stopped local DNS resolver on the rebuilt server; A.17 (Day 29) is a full disk hidden in a dot-directory. The chapters are organised by *what I learned*; this appendix is organised by *what broke*, so it is the place to start when something is wrong.
 
 ## A.0 Symptom → first command
 
@@ -8,7 +8,7 @@ Failures I caused on purpose and then fixed: five Linux ones on **Day 14** (2026
 |---|---|---|
 | website down / service won't start | `systemctl status <svc>` | `sudo journalctl -u <svc> -n 20 --no-pager` → read the `[emerg]` / error line ([A.1](#a1-nginx-will-not-start-config-error), [A.4](#a4-nginx-will-not-start-port-already-in-use)) |
 | config error `in <file>:<line>` | `sudo nano <file>` (root-owned → `sudo`) | `sudo nginx -t` **before** restart |
-| disk almost full | `df -h /` | `sudo du -sh /* 2>/dev/null \| sort -h`, go one level deeper each time; `sudo ls -lah <dir>` for hidden files ([A.2](#a2-disk-almost-full)) |
+| disk almost full | `df -h /` | `sudo du -sh /* 2>/dev/null \| sort -h`, go one level deeper each time; `sudo ls -lah <dir>` for hidden files ([A.2](#a2-disk-almost-full), [A.17](#a17-disk-100-full-hidden-directory)); subdirs add up to much less than the parent = hidden files |
 | `Permission denied` for a user | reproduce as that user: `sudo -u <user> touch <path>` | `ls -ld <dir>` (the directory itself), `id <user>` ([A.3](#a3-shared-directory-permission-denied)) |
 | `Address already in use` | `sudo ss -tlnp \| grep :<port>` | `sudo kill <PID>`, start the service again |
 | cron job does nothing | `sudo journalctl -u cron --since "10 min ago"` | run the script by hand **as the same user**, `ls -l` the script ([A.5](#a5-cron-job-never-produces-output)) |
@@ -446,3 +446,28 @@ DNS (`192.168.207.2`) is on my own subnet, so with a wrong gateway names still r
 - `ss -t` lists TCP sockets, `ss -u` UDP. DNS is UDP, so `ss -tlnp` would have shown nothing useful.
 - **No error in the journal is a clue.** A crash says `Main process exited, code=...` or `Failed with result ...`; a clean `Stopping` → `Stopped` means someone ran `systemctl stop`. Next step in real life: who did it at that time (`last`, `sudo journalctl --since "10:36"`).
 - `dig +trace name @192.168.207.2` timed out — not a symptom: VMware's DNS proxy can't answer `+trace` (which starts at the root servers). Test the gateway's DNS with plain `dig @192.168.207.2 name`.
+
+## A.17 Disk 100% full (hidden directory)
+
+*Day 29 (2026-11-26), on `rebuild` (`192.168.207.60`).* Someone else broke it with a setup script I did not read; I only saw the symptom. Same idea as [A.2](#a2-disk-almost-full), but this time I found it myself and the disk was at 100%.
+
+**Symptom:** "can't write files on this server" — `echo hello > ~/test.txt` fails with `No space left on device`.
+
+| Question | Command | Saw | Conclusion |
+|---|---|---|---|
+| is the disk full? | `df -h /` | `28G 27G 0 100%` | root filesystem is full |
+| which top-level dir? | `sudo du -sh /var/* 2>/dev/null \| sort -h` | `20G /var/lib` (biggest is **last**) | go into `/var/lib` |
+| which dir in `/var/lib`? | `sudo du -sh /var/lib/* 2>/dev/null \| sort -h` | biggest is `159M apt`; all together ~300 MB | **doesn't add up** to 20 GB → something `*` can't see |
+| hidden entries? | `sudo ls -lah /var/lib` | `.pkgcache`, created today 14:07 | suspect (ignore `.` and `..`) |
+| confirm | `sudo du -sh /var/lib/.pkgcache`; `sudo ls -lah /var/lib/.pkgcache` | `20G`; `update-cache.bin 20G` | found it |
+| fix | `sudo rm /var/lib/.pkgcache/update-cache.bin`; `sudo rmdir /var/lib/.pkgcache` | — | — |
+| verify | `df -h /`; `echo hello > ~/test.txt && cat ~/test.txt` | `6.8G used, 20G avail, 27%` | ✅ |
+
+**Lessons**
+- **Totals that don't add up = hidden files.** The shell's `*` skips names that start with `.`; `ls -a` shows them.
+- `ls -l` shows **4.0K for every directory** — that is the directory's own list of names, not its contents. Sizes of directories come from `du`.
+- `.` = this directory, `..` = the parent. Every directory has both; skip them when looking for suspects.
+- `sort -h` understands `K/M/G`; `sort -rn` doesn't (it would put `4.0K` above `1.2G`). `-h` without `-r` puts the biggest **last**.
+- `/dev` is device files, not disk usage — start from `sudo du -sh /* 2>/dev/null | sort -h` instead of guessing a directory.
+- Before `rm` on a real server: `ls` the exact path first, and find out whose file it is. Linux has no recycle bin. (I forgot the `ls` this time.)
+- A normal user hits `No space left` first; root still has ~5% reserved blocks, which is why `sudo` commands may keep working a little longer.
