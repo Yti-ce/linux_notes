@@ -65,6 +65,20 @@ PS> ssh lab
 Welcome to Ubuntu 26.04.1 LTS ...        ← no password prompt = key login works
 ```
 
+**Second server: `Add-Content`, not `Set-Content`.** `Set-Content` is like `>` — it **replaces** the whole file. On Day 28 I ran the block above again for `rebuild` and lost the `Host lab` entry. To add an entry, append (like `>>`):
+
+```powershell
+PS> @"
+
+Host rebuild
+    HostName 192.168.207.60
+    User admin123
+    IdentityFile ~/.ssh/id_ed25519
+"@ | Add-Content -Encoding ascii $env:USERPROFILE\.ssh\config
+
+PS> Get-Content $env:USERPROFILE\.ssh\config     # both Host lab and Host rebuild should be there
+```
+
 **hosts name ≠ ssh alias.** On Day 28 the Windows hosts file had `rebuild-lab → .60` and `~/.ssh/config` had `Host rebuild`. `ssh rebuild-lab` only got the IP from hosts, not the user, so ssh used my Windows user name and failed with `hp@rebuild-lab: Permission denied (publickey)`. `ssh rebuild` works because the alias carries `User admin123`. Look at the user name in the error first.
 
 The config only stores the private key's **path**. What makes the login work is the pair: private key on Windows + public key in the VM's `authorized_keys`.

@@ -64,6 +64,7 @@ HTTP/1.1 200 OK
 | 8 | `curl -I` in PowerShell asked for `Uri:` | PowerShell's `curl` is `Invoke-WebRequest` | [11.10](11-firewall.md#1110-commands): use `curl.exe` |
 | 9 | `ssh rebuild "sudo ufw status"` → `sudo: A terminal is required` | no terminal for the password prompt | `ssh -t` ([10.9](10-ssh-hardening.md#109-commands)) |
 | 10 | Expected 443 `closed`, got `open` | I had also built the HTTPS site; allowed + listening = open | [11.9](11-firewall.md#119-rate-limit-ssh-compared-with-how-to-secure-a-linux-server-day-28): table of open / closed / filtered |
+| 11 | Next day `ssh lab` stopped working; `~/.ssh/config` only had `Host rebuild` | wrote the `rebuild` entry with `Set-Content` (overwrites, like `>`) | [10.3](10-ssh-hardening.md#103-client-alias-sshconfig): second entry with `Add-Content` (appends, like `>>`) |
 
 The known_hosts message on the first connection (`Permanently added 'rebuild-lab'`) looked like an error but is normal — now explained in [10.2](10-ssh-hardening.md#102-make-a-key-and-put-it-on-the-server). A handy one-liner for the hosts file (admin PowerShell):
 
